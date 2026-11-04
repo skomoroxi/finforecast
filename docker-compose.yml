@@ -1,0 +1,63 @@
+# Production stack on the VPS (TECHNICAL-TASK §5.2). Apache (ISPmanager) proxies
+# price-predictions.net to 127.0.0.1:8000; nothing else is exposed outside the server.
+# Memory limits fit a 2 GB server shared with other sites: db 450M, redis 64M, web 300M, worker 600M, beat 128M.
+
+x-app: &app
+  image: finforecast:${IMAGE_TAG:-latest}
+  env_file: .env
+  restart: unless-stopped
+  depends_on:
+    db: { condition: service_healthy }
+    redis: { condition: service_healthy }
+
+services:
+  db:
+    image: timescale/timescaledb:2.31.0-pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-finforecast}
+      POSTGRES_USER: ${POSTGRES_USER:-finforecast}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      TIMESCALEDB_TELEMETRY: "off"
+      TS_TUNE_MEMORY: 400MB
+      TS_TUNE_NUM_CPUS: "1"
+    command: ["postgres", "-c", "shared_buffers=96MB", "-c", "work_mem=4MB", "-c", "max_connections=30",
+              "-c", "maintenance_work_mem=64MB", "-c", "timescaledb.telemetry_level=off"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      retries: 10
+    mem_limit: 450m
+
+  redis:
+    image: redis:7.4.9-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--maxmemory", "48mb", "--maxmemory-policy", "allkeys-lru", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 10
+    mem_limit: 64m
+
+  web:
+    <<: *app
+    ports: ["127.0.0.1:8000:8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=5)"]
+      interval: 30s
+      retries: 3
+    mem_limit: 300m
+
+  worker:
+    <<: *app
+    command: ["celery", "-A", "finforecast", "worker", "--loglevel", "INFO", "--concurrency", "1"]
+    mem_limit: 600m
+
+  beat:
+    <<: *app
+    command: ["celery", "-A", "finforecast", "beat", "--loglevel", "INFO", "--schedule", "/tmp/celerybeat-schedule"]
+    mem_limit: 128m
+
+volumes:
+  pgdata:

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Runs on the VPS as the "deploy" user (called by .github/workflows/deploy.yml).
+set -euo pipefail
+cd /opt/finforecast
+
+: "${IMAGE_TAG:?IMAGE_TAG required}"
+test -f .env || { echo ".env missing in /opt/finforecast (see docs/DEPLOY.md)"; exit 1; }
+
+gunzip -c image.tar.gz | docker load
+rm -f image.tar.gz
+export IMAGE_TAG
+
+docker compose up -d db redis
+docker compose run --rm web python manage.py migrate --noinput
+docker compose up -d --remove-orphans web worker beat
+
+# Keep the last 3 app images, drop the rest (the disk is shared with other sites).
+docker images finforecast --format '{{.Tag}} {{.ID}}' | grep -v '^latest ' | tail -n +4 | awk '{print $2}' | xargs -r docker rmi -f >/dev/null 2>&1 || true
+docker image prune -f >/dev/null
+
+docker compose ps --format 'table {{.Service}}\t{{.Status}}'

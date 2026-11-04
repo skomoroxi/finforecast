@@ -1,0 +1,63 @@
+# Deploy to the VPS after CI passes on main (or by hand).
+# The image is built here and shipped as a file over SSH, so the small server never builds
+# and no container registry or registry token is needed. See docs/DEPLOY.md.
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+      HOST: ${{ vars.DEPLOY_HOST || '91.210.170.44' }}
+      USER: deploy
+    steps:
+      - name: Check deploy key
+        env:
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then echo "::error::Add the DEPLOY_SSH_KEY repository secret (docs/DEPLOY.md)."; exit 1; fi
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
+
+      - name: Pin the server's host key
+        run: cp deploy/known_hosts ~/.ssh/known_hosts
+
+      - name: Build image
+        run: docker build --build-arg GIT_SHA=$SHA -t finforecast:$SHA -t finforecast:latest .
+
+      - name: Ship image and compose file
+        run: |
+          docker save finforecast:$SHA finforecast:latest | gzip -1 > image.tar.gz
+          ls -lh image.tar.gz
+          scp -q image.tar.gz docker-compose.yml deploy/remote-deploy.sh $USER@$HOST:/opt/finforecast/
+
+      - name: Release
+        run: ssh $USER@$HOST "IMAGE_TAG=$SHA bash /opt/finforecast/remote-deploy.sh"
+
+      - name: Health check through Apache
+        run: |
+          for i in $(seq 1 10); do
+            if curl -fsS --max-time 10 https://price-predictions.net/healthz; then echo; exit 0; fi
+            sleep 6
+          done
+          echo "::error::/healthz did not become healthy"; exit 1
