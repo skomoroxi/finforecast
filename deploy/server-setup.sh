@@ -37,7 +37,7 @@ DATABASE_URL=postgres://finforecast:$PW@db:5432/finforecast
 REDIS_URL=redis://redis:6379/0
 TWELVEDATA_API_KEY=
 ALPHAVANTAGE_API_KEY=
-EIA_API_KEY=
+FRED_API_KEY=
 FINNHUB_API_KEY=
 EOF
   chown deploy:deploy "$ENV" && chmod 600 "$ENV"

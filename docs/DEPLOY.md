@@ -22,7 +22,7 @@ Only port 8000 on 127.0.0.1 is published.
    ```
    That is for Windows `cmd`, which does not understand `~`. In Git Bash use `< ~/.ssh/finforecast_gha`.
 3. **API keys** for milestone 2: put them into `/opt/finforecast/.env` on the server (`TWELVEDATA_API_KEY`,
-   `ALPHAVANTAGE_API_KEY`, `EIA_API_KEY`, `FINNHUB_API_KEY`), then `docker compose up -d` in that folder.
+   `ALPHAVANTAGE_API_KEY`, `FRED_API_KEY`, `FINNHUB_API_KEY`), then `docker compose up -d` in that folder.
 4. **Admin user** (Windows `cmd`):
    ```bash
    ssh -t -i "%USERPROFILE%\.ssh\finforecast_ed25519" root@91.210.170.44 "docker exec -it finforecast-web-1 python manage.py createsuperuser"
@@ -37,8 +37,24 @@ Only port 8000 on 127.0.0.1 is published.
 | Logs | `docker compose logs -f --tail 100 web worker beat` |
 | Health | `curl -s 127.0.0.1:8000/healthz` |
 | Restart | `docker compose restart web worker beat` |
+| Load missing price history | `docker exec finforecast-web-1 python manage.py backfill_prices` |
 | Manual deploy | GitHub → Actions → Deploy → Run workflow |
 
+## Daily data jobs (UTC)
+
+| Time | Job |
+|---|---|
+| 00:15 daily | crypto |
+| 00:30 Tue-Sat | FX, gold, silver |
+| 00:50 Tue-Sat | shares and ETFs (after FX: German shares need that day's EUR/USD) |
+| 03:15 Tue-Sat | oil, Brent, heating oil |
+| 04:00 daily | ADR ratio for the 2 shares checked longest ago |
+| every 3 min, US market hours | live quotes into Redis |
+
+Results are in the admin under Fetch runs. A failed asset keeps its old data and the run carries on.
+
 ## Known constraints
+- EIA's API refuses this server's Russian IP range (HTTP 403, with or without a key), so heating oil comes from
+  FRED's API, series DHOILNYH, which republishes the same EIA data. FRED's CSV endpoint is not reachable from here.
 - Ubuntu 18.04 is past standard support; Docker is pinned at 24.0.2 (last release for 18.04). Plan an OS upgrade or a new VPS.
 - 1.9 GB RAM shared with other sites, plus 2 GB swap. Upgrading to 4 GB RAM is the most useful improvement.

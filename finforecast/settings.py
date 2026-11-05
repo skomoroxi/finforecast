@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "apps.core",
+    "apps.market",
 ]
 
 MIDDLEWARE = [
@@ -81,9 +82,43 @@ CELERY_TIMEZONE = "UTC"
 # One task at a time: the server has little RAM (TECHNICAL-TASK §5.2).
 CELERY_WORKER_CONCURRENCY = 1
 CELERY_WORKER_MAX_TASKS_PER_CHILD = 20
+# Data jobs run after midnight UTC, once the previous day is final everywhere (TECHNICAL-TASK §13).
+# Order matters: German shares need that day's EUR/USD, so stocks follow fx_metal.
 CELERY_BEAT_SCHEDULE = {
     "heartbeat": {"task": "apps.core.tasks.heartbeat", "schedule": crontab(minute="*/5")},
+    "update-crypto": {
+        "task": "apps.market.tasks.update_group",
+        "schedule": crontab(hour=0, minute=15),
+        "args": ["crypto"],
+    },
+    "update-fx-metal": {
+        "task": "apps.market.tasks.update_group",
+        "schedule": crontab(hour=0, minute=30, day_of_week="tue-sat"),
+        "args": ["fx_metal"],
+    },
+    "update-stocks": {
+        "task": "apps.market.tasks.update_group",
+        "schedule": crontab(hour=0, minute=50, day_of_week="tue-sat"),
+        "args": ["stocks"],
+    },
+    "update-energy": {
+        "task": "apps.market.tasks.update_group",
+        "schedule": crontab(hour=3, minute=15, day_of_week="tue-sat"),
+        "args": ["energy"],
+    },
+    "adr-ratios": {"task": "apps.market.tasks.recalc_ratios", "schedule": crontab(hour=4, minute=0)},
+    "live-quotes": {
+        "task": "apps.market.tasks.refresh_live_quotes",
+        "schedule": crontab(minute="*/3", hour="13-21", day_of_week="mon-fri"),
+        "options": {"expires": 120},  # skip a turn rather than pile up behind a long job
+    },
 }
+
+# Market data keys. Never logged; adapters strip them from error messages.
+TWELVEDATA_API_KEY = env("TWELVEDATA_API_KEY", default="")
+ALPHAVANTAGE_API_KEY = env("ALPHAVANTAGE_API_KEY", default="")
+FRED_API_KEY = env("FRED_API_KEY", default="")
+FINNHUB_API_KEY = env("FINNHUB_API_KEY", default="")
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},

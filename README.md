@@ -5,7 +5,8 @@ Specification: [docs/TECHNICAL-TASK.md](docs/TECHNICAL-TASK.md). Deployment: [do
 
 ## Status
 - [x] **M1: skeleton.** Django project, Docker Compose stack, CI (lint, tests on TimescaleDB + Redis, image build), deploy workflow, server setup script.
-- [ ] M2: data adapters and price history · M3: models and accuracy · M4: content engine · M5: admin · M6: front end · M7: en + de · M8: SEO · M9: legal · M10: launch
+- [x] **M2: data.** 87 instruments, provider adapters with rate limits, daily jobs, German shares in euros from ADRs, fetch log.
+- [ ] M3: models and accuracy · M4: content engine · M5: admin · M6: front end · M7: en + de · M8: SEO · M9: legal · M10: launch
 
 ## Local development
 ```bash
