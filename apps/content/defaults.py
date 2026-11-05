@@ -24,9 +24,9 @@ COMMON = {
     "h_accuracy": "How we forecast {subject} and how accurate we are",
     "h_faq": "{name} price prediction FAQ",
     "reviewer": "Margerie Holtz",
-    "intro": """Daily {subject} {noun} forecasts for the next 30 days, monthly averages for every month to December {last_year} and a yearly outlook to {last_yearly}, from three independent statistical models.
+    "intro": """Daily {subject_short} {noun} forecasts for the next 30 days, monthly averages for every month to December {last_year} and a yearly outlook to {last_yearly}, from three independent statistical models.
 ~~
-This page forecasts the {subject} {noun} for the next 30 days, for every month through {last_year} and for each year to {last_yearly}, using three different statistical models and their consensus.
+This page forecasts the {subject_short} {noun} for the next 30 days, for every month through {last_year} and for each year to {last_yearly}, using three different statistical models and their consensus.
 
 The forecasts, the technical analysis and this text are recalculated automatically every day from the latest closing price.
 ~~

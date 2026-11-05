@@ -82,6 +82,12 @@ def test_asset_page_renders_every_section(client, btc):
     assert "**" not in html
 
 
+def test_stock_pages_do_not_repeat_the_word(client, seeded):
+    add_forecast(asset("BMW"), 60.0)
+    html = client.get(asset("BMW").slug.join(("/", "/"))).content.decode()
+    assert "stock stock" not in html
+
+
 def test_page_is_noindex_before_launch(client, btc):
     assert 'content="noindex, nofollow"' in client.get("/bitcoin-price-prediction/").content.decode()
 

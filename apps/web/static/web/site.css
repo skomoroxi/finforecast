@@ -1497,54 +1497,6 @@ h3.year__heading {
     top: 8px;
   }
 
-/* TextPage */
-.band {
-    padding: 64px 0 48px;
-  }
-  .crumbs {
-    font-size: 13px;
-    letter-spacing: normal;
-    margin-bottom: 24px;
-    color: var(--muted-on-dark);
-  }
-  .crumbs a,
-  .crumbs a:visited {
-    color: var(--gray-300);
-  }
-  .lead {
-    margin-top: 20px;
-    max-width: 720px;
-    font-size: 18px;
-    color: var(--gray-300);
-  }
-  .prose {
-    max-width: 760px;
-  }
-  .prose :global(h2) {
-    font-size: clamp(28px, 3.4vw, 36px);
-    margin: 48px 0 12px;
-  }
-  .prose :global(h2:first-child) {
-    margin-top: 0;
-  }
-  .prose :global(ul),
-  .prose :global(ol) {
-    padding-left: 22px;
-    margin: 0 0 16px;
-  }
-  .prose :global(li) {
-    margin-bottom: 6px;
-  }
-  .prose :global(code) {
-    font-size: 14px;
-    background: var(--gray-100);
-    padding: 1px 5px;
-    border-radius: 3px;
-  }
-  .prose :global(.dt) {
-    margin: 16px 0 24px;
-  }
-
 /* Public site additions */
 .page-head { padding: var(--section-y) 0; }
 .page-head h1 { color: var(--cream); margin: 0 0 12px; }
