@@ -1,0 +1,57 @@
+{% extends "admin/base_site.html" %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{{ block.super }}
+<style>
+  .dash { max-width: 960px; font-size: 14px; line-height: 1.5; }
+  .dash h2 { font-size: 16px; font-weight: 600; margin: 24px 0 8px; }
+  .dash table { width: 100%; border-collapse: collapse; }
+  .dash th, .dash td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #8884; }
+  .dash-cards { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+  .dash-card { flex: 1; min-width: 140px; padding: 12px 14px; border: 1px solid #8884; border-radius: 6px; }
+  .dash-card strong { display: block; font-size: 24px; }
+  .dash-card.alert { border-color: #b45309; }
+  .dash a { text-decoration: underline; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="dash">
+  <div class="dash-cards">
+    <a class="dash-card" href="{% url 'admin:market_asset_changelist' %}"><strong>{{ dashboard.pages }}</strong>asset pages</a>
+    <a class="dash-card{% if dashboard.failure_count %} alert{% endif %}" href="{% url 'admin:market_fetchrun_changelist' %}"><strong>{{ dashboard.failure_count }}</strong>failures in 24 hours</a>
+    <div class="dash-card{% if dashboard.stale_count %} alert{% endif %}"><strong>{{ dashboard.stale_count }}</strong>assets with old or no prices</div>
+    <a class="dash-card" href="{% url 'admin:content_draft_changelist' %}"><strong>{{ dashboard.drafts }}</strong>AI drafts to review</a>
+  </div>
+
+  {% if dashboard.paused %}
+    <h2>ADR ratios waiting for a decision</h2>
+    <ul>{% for c in dashboard.paused %}<li><a href="{% url 'admin:market_adrconversion_change' c.pk %}">{{ c.asset.code }}</a>: {{ c.ratio_auto }} to {{ c.ratio_candidate }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  {% if dashboard.stale %}
+    <h2>Old prices</h2>
+    <ul>{% for code, last in dashboard.stale %}<li>{{ code }}: {% if last %}last close {{ last|date:"Y-m-d" }}{% else %}no prices yet{% endif %}</li>{% endfor %}</ul>
+  {% endif %}
+
+  {% if dashboard.failures %}
+    <h2>Recent failures</h2>
+    <table>
+      <tr><th>Job</th><th>Asset</th><th>Problem</th></tr>
+      {% for f in dashboard.failures %}
+        <tr><td>{{ f.run.task }}</td><td>{{ f.asset.code }}</td><td>{{ f.message }}</td></tr>
+      {% endfor %}
+    </table>
+  {% endif %}
+
+  <h2>Latest jobs</h2>
+  <table>
+    <tr><th>Job</th><th>Started (UTC)</th><th>OK</th><th>Failed</th></tr>
+    {% for r in dashboard.runs %}
+      <tr>
+        <td><a href="{% url 'admin:market_fetchrun_change' r.pk %}">{{ r.task }}</a></td>
+        <td>{{ r.started_at|date:"Y-m-d H:i" }}{% if not r.finished_at %} (not finished){% endif %}</td>
+        <td>{{ r.ok_count }}</td><td>{{ r.error_count }}</td>
+      </tr>
+    {% empty %}<tr><td colspan="4">No jobs yet.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

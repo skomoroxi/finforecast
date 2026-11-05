@@ -40,6 +40,17 @@ Only port 8000 on 127.0.0.1 is published.
 | Load missing price history | `docker exec finforecast-web-1 python manage.py backfill_prices` |
 | Manual deploy | GitHub → Actions → Deploy → Run workflow |
 
+## Admin login
+
+Staff sign in with a password and then a code from an authenticator app; the first login shows the QR code and 8
+recovery codes. If a phone is lost, use a recovery code. If those are gone too, on the server:
+
+```bash
+docker exec finforecast-web-1 python manage.py addstatictoken <username>
+```
+
+That prints a one-time code. After signing in with it, delete the old device under OTP TOTP devices and set up again.
+
 ## Daily data jobs (UTC)
 
 | Time | Job |

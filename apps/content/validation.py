@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from . import templating
 from .context import FLAGS, VARIABLES, YEAR_VARIABLES
 from .fields import BY_KEY, FLAG, PAIRS
+from .models import Reviewer
 
 TYPICAL_VALUE_LENGTH = 9  # a variable's rough length once filled in, for the length warning
 
@@ -43,4 +44,12 @@ def check(field_key: str, text: str) -> Report:
         length = len(templating.VAR.sub("x" * TYPICAL_VALUE_LENGTH, text.strip()))
         if length > definition.max_length:
             report.warnings.append(f"about {length} characters, the limit is {definition.max_length}")
+    return report
+
+
+def full_check(field_key: str, text: str) -> Report:
+    """`check`, plus what needs the database."""
+    report = check(field_key, text)
+    if field_key == "reviewer" and not Reviewer.objects.filter(name=text.strip()).exists():
+        report.errors.append(f"no reviewer called {text.strip()}")
     return report

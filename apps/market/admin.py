@@ -1,9 +1,27 @@
 from django.contrib import admin, messages
 from django.db.models import Max
+from django.urls import reverse
+from django.utils.html import format_html
 from unfold.admin import ModelAdmin, TabularInline
 
 from . import tasks
 from .models import AdrConversion, Asset, AssetClass, FetchResult, FetchRun
+
+
+def rerun(task: str, codes: list[str]) -> None:
+    """Queue the same kind of job again for these assets."""
+    if task.startswith("forecast"):
+        from apps.forecasts.tasks import forecast_codes
+
+        forecast_codes.delay(codes)
+    elif task == "ai-draft":
+        from apps.content.tasks import create_drafts
+
+        create_drafts.delay(codes)
+    elif task == "adr-ratio":
+        tasks.recalc_codes.delay(codes)
+    else:
+        tasks.update_codes.delay(codes, full=task == "backfill")
 
 
 @admin.register(AssetClass)
@@ -13,7 +31,7 @@ class AssetClassAdmin(ModelAdmin):
 
 @admin.register(Asset)
 class AssetAdmin(ModelAdmin):
-    list_display = ["code", "name", "asset_class", "source", "symbol", "currency", "enabled", "last_bar"]
+    list_display = ["code", "name", "asset_class", "source", "symbol", "currency", "enabled", "last_bar", "page"]
     list_filter = ["asset_class", "source", "enabled"]
     search_fields = ["code", "name", "symbol"]
     actions = ["update_now", "reload_history", "create_ai_drafts"]
@@ -24,6 +42,12 @@ class AssetAdmin(ModelAdmin):
     @admin.display(description="Last price", ordering="last_bar_date")
     def last_bar(self, obj):
         return obj.last_bar_date
+
+    @admin.display(description="Content")
+    def page(self, obj):
+        if obj.series_of_id:
+            return "-"
+        return format_html('<a href="{}">Edit page</a>', reverse("admin:content_editor", args=[obj.code, "en"]))
 
     @admin.action(description="Update prices now")
     def update_now(self, request, queryset):
@@ -83,6 +107,17 @@ class FetchRunAdmin(ModelAdmin):
     list_display = ["task", "started_at", "finished_at", "ok_count", "error_count"]
     list_filter = ["task"]
     inlines = [FetchResultInline]
+    actions = ["rerun_failed"]
+
+    @admin.action(description="Run the failed assets again")
+    def rerun_failed(self, request, queryset):
+        count = 0
+        for run in queryset:
+            codes = list(run.results.filter(ok=False).values_list("asset__code", flat=True))
+            if codes:
+                rerun(run.task, codes)
+                count += len(codes)
+        self.message_user(request, f"{count} assets queued.", messages.SUCCESS)
 
     def has_add_permission(self, request):
         return False

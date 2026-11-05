@@ -1,0 +1,111 @@
+{% extends "admin/base_site.html" %}
+{% block extrastyle %}{{ block.super }}
+<style>
+  .ed { max-width: 960px; font-size: 14px; line-height: 1.5; }
+  .ed h2 { font-size: 16px; font-weight: 600; margin: 28px 0 10px; }
+  .ed-tabs { display: flex; gap: 8px; margin: 8px 0 16px; flex-wrap: wrap; }
+  .ed-tabs a { padding: 6px 14px; border: 1px solid #8884; border-radius: 6px; }
+  .ed-tabs a.on { background: #1431cd; border-color: #1431cd; color: #fff; }
+  .ed-note { margin: 8px 0; opacity: .8; }
+  .ed details { border: 1px solid #8884; border-radius: 6px; margin-bottom: 8px; padding: 10px 14px; }
+  .ed summary { cursor: pointer; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  .ed-name { font-weight: 600; }
+  .ed-badge { font-size: 12px; padding: 1px 8px; border-radius: 10px; border: 1px solid #8886; }
+  .ed-badge.override { background: #1431cd; border-color: #1431cd; color: #fff; }
+  .ed-badge.empty, .ed-badge.draft { background: #b45309; border-color: #b45309; color: #fff; }
+  .ed-short { opacity: .7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 120px; }
+  .ed textarea { width: 100%; min-height: 110px; padding: 8px; border: 1px solid #8886; border-radius: 6px;
+    background: transparent; color: inherit; font: 13px/1.5 ui-monospace, monospace; }
+  .ed select { padding: 6px 8px; border: 1px solid #8886; border-radius: 6px; background: transparent; color: inherit; }
+  .ed-preview { margin: 10px 0; padding: 10px 12px; border-left: 3px solid #1431cd; }
+  .ed-preview p { margin: 0 0 6px; }
+  .ed-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .ed button { padding: 6px 14px; border-radius: 6px; border: 1px solid #1431cd; background: #1431cd; color: #fff; cursor: pointer; }
+  .ed button.plain { background: transparent; color: inherit; border-color: #8886; }
+  .ed-draft { margin-top: 12px; padding: 10px 12px; border: 1px solid #b45309; border-radius: 6px; }
+  .ed-draft pre { white-space: pre-wrap; font: inherit; margin: 6px 0; }
+  .ed-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; opacity: .7; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="ed">
+  <p class="ed-note">
+    {{ asset.code }} · {{ asset.asset_class }} ·
+    {{ manual_count }} field{{ manual_count|pluralize }} with your own value{% if draft_count %} · {{ draft_count }} draft{{ draft_count|pluralize }} to review{% endif %}
+  </p>
+  <div class="ed-tabs">
+    {% for l in languages %}
+      <a href="{% url 'admin:content_editor' asset.code l.code %}" class="{% if l.pk == language.pk %}on{% endif %}">{{ l.name }}{% if not l.enabled %} (off){% endif %}</a>
+    {% endfor %}
+  </div>
+  {% if no_forecast %}<p class="ed-note">No forecast yet, so today's preview is unavailable.</p>{% endif %}
+  <p class="ed-note">Text can use variables such as <code>{price}</code>. A value saved here is for this asset and language only.</p>
+
+  {% for section in sections %}
+    <h2>{{ section.title }}</h2>
+    {% for row in section.rows %}
+      <details id="{{ row.field.key }}"{% if row.open %} open{% endif %}>
+        <summary>
+          <span class="ed-name">{{ row.field.label }}</span>
+          {% if row.state == "override" %}<span class="ed-badge override">Your value</span>
+          {% elif row.state == "template" %}<span class="ed-badge">Template</span>
+          {% elif not row.field.optional %}<span class="ed-badge empty">No text</span>{% endif %}
+          {% if row.draft %}<span class="ed-badge draft">Draft to review</span>{% endif %}
+          {% if row.preview %}<span class="ed-short">{{ row.preview.0 }}</span>{% endif %}
+        </summary>
+
+        {% if row.preview %}
+          <div class="ed-preview">
+            <div class="ed-label">Today</div>
+            {% for line in row.preview %}<p>{{ line }}</p>{% endfor %}
+          </div>
+        {% endif %}
+
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="field" value="{{ row.field.key }}">
+          {% if row.field.kind == "flag" %}
+            <select name="value">
+              <option value="1"{% if row.shown %} selected{% endif %}>Show</option>
+              <option value="0"{% if not row.shown %} selected{% endif %}>Hide</option>
+            </select>
+          {% elif row.field.key == "reviewer" %}
+            <select name="value">
+              {% for name in reviewers %}<option{% if name == row.text %} selected{% endif %}>{{ name }}</option>{% endfor %}
+            </select>
+          {% else %}
+            <textarea name="value" aria-label="{{ row.field.label }}">{{ row.text }}</textarea>
+          {% endif %}
+          <div class="ed-actions">
+            <button name="action" value="save">Save</button>
+            {% if row.state == "override" %}<button name="action" value="reset" class="plain">Reset to template</button>{% endif %}
+          </div>
+        </form>
+
+        {% if row.draft %}
+          <div class="ed-draft">
+            <div class="ed-label">AI draft, not published</div>
+            {% if row.draft_has_figures %}<p>This draft contains a figure. Check it carefully.</p>{% endif %}
+            <pre>{{ row.draft.value }}</pre>
+            <form method="post" class="ed-actions">
+              {% csrf_token %}
+              <input type="hidden" name="field" value="{{ row.field.key }}">
+              <button name="action" value="approve">Approve and publish</button>
+              <button name="action" value="reject" class="plain">Discard</button>
+            </form>
+          </div>
+        {% endif %}
+      </details>
+    {% endfor %}
+  {% endfor %}
+
+  <h2>Custom blocks</h2>
+  {% for block in blocks %}
+    <p><a href="{% url 'admin:content_customblock_change' block.pk %}">{{ block.title }}</a> after {{ block.after_section }}{% if not block.enabled %} (hidden){% endif %}</p>
+  {% empty %}<p class="ed-note">None on this page.</p>{% endfor %}
+  <div class="ed-actions"><a href="{{ block_add }}?asset={{ asset.pk }}&amp;language={{ language.pk }}">Add a block</a></div>
+
+  <h2>Analyst forecasts</h2>
+  <div class="ed-actions"><a href="{{ analysts_url }}">Open the list for {{ asset.name }}</a></div>
+</div>
+{% endblock %}

@@ -3,10 +3,21 @@ from django.contrib import admin, messages
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.urls import path
-from unfold.admin import ModelAdmin
+from unfold.admin import ModelAdmin, TabularInline
 
 from . import csvio, drafts, services, validation
-from .models import Draft, Language, Override, Revision, Template
+from .editor import editor_view
+from .models import (
+    AnalystTarget,
+    CustomBlock,
+    Draft,
+    Language,
+    Override,
+    Reviewer,
+    ReviewerBio,
+    Revision,
+    Template,
+)
 
 PREVIEW = 80
 
@@ -15,10 +26,12 @@ class CheckedForm(forms.ModelForm):
     """Unknown substitutions and bad structure stop the save. Warnings are shown after it."""
 
     text_field = ""
+    check_field = ""
 
     def clean(self):
         cleaned = super().clean()
-        report = validation.check(cleaned.get("field", ""), cleaned.get(self.text_field, ""))
+        field_key = self.check_field or cleaned.get("field", "")
+        report = validation.full_check(field_key, cleaned.get(self.text_field, ""))
         for error in report.errors:
             self.add_error(self.text_field, error)
         self.warnings = report.warnings
@@ -39,6 +52,15 @@ class OverrideForm(CheckedForm):
     class Meta:
         model = Override
         fields = ["asset", "language", "field", "value"]
+
+
+class CustomBlockForm(CheckedForm):
+    text_field = "body"
+    check_field = "intro"  # the same rules as any free text field
+
+    class Meta:
+        model = CustomBlock
+        fields = ["asset", "language", "after_section", "title", "body", "order", "enabled"]
 
 
 class UploadForm(forms.Form):
@@ -118,6 +140,13 @@ class OverrideAdmin(CsvAdmin):
     search_fields = ["asset__code", "asset__name", "value"]
     actions = ["reset_to_template"]
 
+    def get_urls(self):
+        editor = self.admin_site.admin_view(editor_view)
+        return [
+            path("editor/<str:code>/<str:language_code>/", editor, name="content_editor"),
+            *super().get_urls(),
+        ]
+
     def csv_export(self):
         return csvio.export_overrides()
 
@@ -145,6 +174,43 @@ class OverrideAdmin(CsvAdmin):
         count = queryset.count()
         self.delete_queryset(request, queryset)
         self.message_user(request, f"{count} reset to the template.", messages.SUCCESS)
+
+
+class ReviewerBioInline(TabularInline):
+    model = ReviewerBio
+    extra = 0
+
+
+@admin.register(Reviewer)
+class ReviewerAdmin(ModelAdmin):
+    list_display = ["name", "job_title", "slug"]
+    prepopulated_fields = {"slug": ["name"]}
+    inlines = [ReviewerBioInline]
+
+
+@admin.register(CustomBlock)
+class CustomBlockAdmin(ModelAdmin):
+    form = CustomBlockForm
+    list_display = ["asset", "language", "title", "after_section", "order", "enabled"]
+    list_filter = ["language", "enabled"]
+    search_fields = ["asset__code", "title", "body"]
+
+
+@admin.register(AnalystTarget)
+class AnalystTargetAdmin(ModelAdmin):
+    list_display = [
+        "asset",
+        "institution",
+        "kind",
+        "target",
+        "target_low",
+        "target_high",
+        "horizon",
+        "published_on",
+        "show",
+    ]
+    list_filter = ["kind", "show", "asset"]
+    search_fields = ["asset__code", "institution", "source_title"]
 
 
 @admin.register(Revision)

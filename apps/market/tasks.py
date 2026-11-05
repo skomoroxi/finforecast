@@ -53,6 +53,12 @@ def recalc_ratios() -> None:
 
 
 @shared_task
+def recalc_codes(codes: list[str]) -> None:
+    assets = _enabled().filter(code__in=codes)
+    services.run_assets("adr-ratio", assets, action=lambda asset: services.recalc_ratio(asset.adr))
+
+
+@shared_task
 def rebuild_adr(asset_code: str) -> None:
     assets = _enabled().filter(code=asset_code)
     services.run_assets("adr-rebuild", assets, action=lambda asset: services.rebuild_adr(asset.adr))

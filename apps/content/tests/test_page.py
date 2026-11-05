@@ -113,7 +113,7 @@ def flat(built) -> str:
 def test_default_template_fills_the_page(btc):
     built = page.build_page(btc)
     assert built["title"].startswith("Bitcoin Price Prediction")
-    assert built["reviewer"] == "Margerie Holtz"
+    assert built["reviewer"]["name"] == "Margerie Holtz"
     assert "$100.00" in built["summary"][0] or "$100.0" in built["summary"][0]
     assert built["show"]["faq"] is True
     assert built["years"][0]["year"] == timezone.now().year

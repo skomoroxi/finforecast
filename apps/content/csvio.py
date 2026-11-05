@@ -47,7 +47,7 @@ def _rows(text: str, columns: list[str], report: ImportReport):
 
 
 def _checked(line: int, field_key: str, value: str, report: ImportReport) -> bool:
-    result = validation.check(field_key, value)
+    result = validation.full_check(field_key, value)
     report.warnings += [f"line {line}: {w}" for w in result.warnings]
     report.errors += [f"line {line}: {e}" for e in result.errors]
     return not result.errors
