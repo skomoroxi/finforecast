@@ -211,7 +211,7 @@ def test_history_and_rollback(btc):
     first = Revision.objects.filter(field="h1", value="First").first()
     services.roll_back(first)
     assert Override.objects.get(asset=btc, field="h1").value == "First"
-    assert Revision.objects.filter(field="h1").count() == 3
+    assert Revision.objects.filter(asset=btc, field="h1").count() == 3
 
 
 def test_seed_keeps_admin_edits(btc):

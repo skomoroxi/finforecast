@@ -44,6 +44,10 @@ def test_empty_values_leave_no_gaps_in_the_sentence():
     assert render("Closed at {price} {unit} .", {"price": "1.12", "unit": ""}) == ["Closed at 1.12."]
 
 
+def test_the_pair_separator_survives_cleanup():
+    assert render("Title :: {x}.", {"x": "text"}) == ["Title :: text."]
+
+
 def test_names_finds_variables_and_flags():
     assert t.names("?up: {a}\n~~\n{b}\n\n{c}") == ({"a", "b", "c"}, {"up"})
 
