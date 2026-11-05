@@ -14,7 +14,7 @@ export IMAGE_TAG
 if grep -q "^IMAGE_TAG=" .env; then sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$IMAGE_TAG/" .env; else echo "IMAGE_TAG=$IMAGE_TAG" >> .env; fi
 
 docker compose up -d db redis
-docker compose run --rm web sh -c "python manage.py migrate --noinput && python manage.py seed_assets"
+docker compose run --rm web sh -c "python manage.py migrate --noinput && python manage.py seed_assets && python manage.py seed_templates"
 docker compose up -d --remove-orphans web worker beat
 
 # Keep the last 3 app images, drop the rest (the disk is shared with other sites).

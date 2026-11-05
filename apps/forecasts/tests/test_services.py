@@ -8,7 +8,7 @@ from django.core.management import call_command
 from django.db import connection
 from django.utils import timezone
 
-from apps.forecasts import accuracy, services
+from apps.forecasts import accuracy, display, services
 from apps.forecasts.models import ForecastAccuracy, ForecastPoint, ForecastRun, TechnicalSnapshot
 from apps.market.models import Asset, PriceBar
 
@@ -238,7 +238,7 @@ def test_display_prefers_live_once_there_are_30_samples(seeded):
     accuracy_row(asset, "backtest", 50, "7d")
     accuracy_row(asset, "live", 30, "1d")
     accuracy_row(asset, "live", 29, "7d")
-    shown = {(r.horizon, r.basis) for r in accuracy.for_display(asset)}
+    shown = {(r.horizon, r.basis) for r in display.for_display(asset)}
     assert shown == {("1d", "live"), ("7d", "backtest")}
 
 

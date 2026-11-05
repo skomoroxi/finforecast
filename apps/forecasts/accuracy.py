@@ -12,7 +12,6 @@ from .engine.backtest import HORIZONS
 from .models import ForecastAccuracy
 
 WINDOWS = (30, 90, 365)
-MIN_LIVE_SAMPLES = 30
 
 DAILY_SQL = """
     SELECT d.method, d.target, d.value, d.p10, d.p90, d.base, d.step, b.close AS actual
@@ -107,16 +106,3 @@ def update_asset(asset: Asset) -> tuple[int, date, str]:
         ForecastAccuracy(asset=asset, basis=ForecastAccuracy.Basis.LIVE, computed_on=today, **row) for row in rows
     )
     return len(rows), today, "accuracy"
-
-
-def for_display(asset: Asset) -> list[ForecastAccuracy]:
-    """Live accuracy once a horizon has 30 matured forecasts, the walk-forward backtest until then."""
-    rows = ForecastAccuracy.objects.filter(asset=asset)
-    live = [r for r in rows if r.basis == ForecastAccuracy.Basis.LIVE]
-    enough = {r.horizon for r in live if r.samples >= MIN_LIVE_SAMPLES}
-    return [
-        r
-        for r in rows
-        if (r.basis == ForecastAccuracy.Basis.LIVE and r.horizon in enough)
-        or (r.basis == ForecastAccuracy.Basis.BACKTEST and r.horizon not in enough)
-    ]

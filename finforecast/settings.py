@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.market",
     "apps.forecasts",
+    "apps.content",
 ]
 
 MIDDLEWARE = [
@@ -124,6 +125,7 @@ TWELVEDATA_API_KEY = env("TWELVEDATA_API_KEY", default="")
 ALPHAVANTAGE_API_KEY = env("ALPHAVANTAGE_API_KEY", default="")
 FRED_API_KEY = env("FRED_API_KEY", default="")
 FINNHUB_API_KEY = env("FINNHUB_API_KEY", default="")
+ANTHROPIC_API_KEY = env("ANTHROPIC_API_KEY", default="")
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},

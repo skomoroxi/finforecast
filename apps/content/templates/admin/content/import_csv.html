@@ -1,0 +1,15 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Import</button>
+  </form>
+  {% if report %}
+    <p>{{ report.saved }} saved, {{ report.errors|length }} errors, {{ report.warnings|length }} warnings.</p>
+    <ul>
+      {% for line in report.errors %}<li>Error: {{ line }}</li>{% endfor %}
+      {% for line in report.warnings %}<li>Warning: {{ line }}</li>{% endfor %}
+    </ul>
+  {% endif %}
+{% endblock %}

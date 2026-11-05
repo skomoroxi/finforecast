@@ -16,7 +16,7 @@ class AssetAdmin(ModelAdmin):
     list_display = ["code", "name", "asset_class", "source", "symbol", "currency", "enabled", "last_bar"]
     list_filter = ["asset_class", "source", "enabled"]
     search_fields = ["code", "name", "symbol"]
-    actions = ["update_now", "reload_history"]
+    actions = ["update_now", "reload_history", "create_ai_drafts"]
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(last_bar_date=Max("bars__date"))
@@ -34,6 +34,13 @@ class AssetAdmin(ModelAdmin):
     def reload_history(self, request, queryset):
         tasks.update_codes.delay(list(queryset.values_list("code", flat=True)), full=True)
         self.message_user(request, "Queued. See Fetch runs for the result.", messages.SUCCESS)
+
+    @admin.action(description="Create AI drafts (English)")
+    def create_ai_drafts(self, request, queryset):
+        from apps.content.tasks import create_drafts
+
+        create_drafts.delay(list(queryset.values_list("code", flat=True)))
+        self.message_user(request, "Queued. See Fetch runs, then Drafts.", messages.SUCCESS)
 
 
 @admin.register(AdrConversion)

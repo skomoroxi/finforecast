@@ -15,3 +15,6 @@ select = ["E", "F", "I", "B", "UP", "DJ"]
 DJANGO_SETTINGS_MODULE = "finforecast.settings"
 python_files = ["test_*.py"]
 addopts = "-q"
+
+[tool.ruff.lint.per-file-ignores]
+"apps/content/defaults.py" = ["E501"]  # one template paragraph per line
