@@ -120,6 +120,15 @@ def test_only_assets_with_a_new_close_are_due(seeded, quick):
     assert {a.code for a in services.due_assets()} == {"MSFT"}
 
 
+def test_imported_runs_do_not_count_as_forecast_done(seeded):
+    asset = Asset.objects.get(code="AAPL")
+    days = add_bars(asset)
+    ForecastRun.objects.create(
+        asset=asset, run_date=days[-1], data_date=days[-1], last_close=1, model_version=services.SMALL_SITE
+    )
+    assert [a.code for a in services.due_assets()] == ["AAPL"]
+
+
 def test_supporting_series_get_no_forecast(seeded):
     add_bars(Asset.objects.get(code="BRENT"))
     assert services.due_assets() == []

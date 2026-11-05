@@ -14,6 +14,7 @@ from .models import ForecastAccuracy, ForecastPoint, ForecastRun, TechnicalSnaps
 from .ta import build as ta_build
 
 MIN_BARS = 60
+SMALL_SITE = "small-site"
 MODEL_MAX_AGE_DAYS = 7  # the ARIMA order search is 32 fits; once a week is enough
 BACKTEST_MAX_AGE_DAYS = 7
 
@@ -133,7 +134,10 @@ def due_assets():
         PriceBar.objects.filter(asset=OuterRef("pk")).order_by("-date").values("date")[:1],
     )
     last_seen = Subquery(
-        ForecastRun.objects.filter(asset=OuterRef("pk")).order_by("-run_date").values("data_date")[:1],
+        ForecastRun.objects.filter(asset=OuterRef("pk"))
+        .exclude(model_version=SMALL_SITE)  # imported history; the asset still needs its own forecast
+        .order_by("-run_date")
+        .values("data_date")[:1],
     )
     pages = Asset.objects.filter(enabled=True, series_of=None).select_related("asset_class")
     pages = pages.annotate(last_bar=last_bar, last_seen=last_seen).exclude(last_bar=None)
