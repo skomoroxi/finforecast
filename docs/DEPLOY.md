@@ -18,11 +18,15 @@ Only port 8000 on 127.0.0.1 is published.
    - enables Apache proxy modules and puts `.htaccess` into the price-predictions.net docroot to forward to the app
 2. **GitHub secret** (from the machine that holds the key):
    ```bash
-   gh secret set DEPLOY_SSH_KEY --repo skomoroxi/finforecast < ~/.ssh/finforecast_gha
+   gh secret set DEPLOY_SSH_KEY --repo skomoroxi/finforecast < "%USERPROFILE%\.sshinforecast_gha"
    ```
+   That is for Windows `cmd`, which does not understand `~`. In Git Bash use `< ~/.ssh/finforecast_gha`.
 3. **API keys** for milestone 2: put them into `/opt/finforecast/.env` on the server (`TWELVEDATA_API_KEY`,
    `ALPHAVANTAGE_API_KEY`, `EIA_API_KEY`, `FINNHUB_API_KEY`), then `docker compose up -d` in that folder.
-4. **Admin user**: `ssh root@91.210.170.44 "cd /opt/finforecast && docker compose run --rm web python manage.py createsuperuser"`
+4. **Admin user** (Windows `cmd`):
+   ```bash
+   ssh -t -i "%USERPROFILE%\.sshinforecast_ed25519" root@91.210.170.44 "docker exec -it finforecast-web-1 python manage.py createsuperuser"
+   ```
    The admin path is printed by the setup script (`ADMIN_URL` in `.env`).
 
 ## Operations

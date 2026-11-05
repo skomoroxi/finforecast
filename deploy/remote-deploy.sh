@@ -10,6 +10,9 @@ gunzip -c image.tar.gz | docker load
 rm -f image.tar.gz
 export IMAGE_TAG
 
+# Remember the running version, so plain "docker compose ..." works here without IMAGE_TAG set.
+if grep -q "^IMAGE_TAG=" .env; then sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$IMAGE_TAG/" .env; else echo "IMAGE_TAG=$IMAGE_TAG" >> .env; fi
+
 docker compose up -d db redis
 docker compose run --rm web python manage.py migrate --noinput
 docker compose up -d --remove-orphans web worker beat
