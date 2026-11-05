@@ -19,11 +19,22 @@
   const toPoints = (rows) => rows.filter(([, v]) => v != null).map(([time, value]) => ({ time, value }));
   const day = (date) => date.toISOString().slice(0, 10);
 
+  // The default of two decimals would show a $0.0000047 coin as 0.00.
+  function priceFormat(price) {
+    const digits = price >= 1000 ? 0 : price >= 10 ? 2 : price >= 1 ? 3 : Math.min(10, 3 - Math.floor(Math.log10(price)));
+    const number = new Intl.NumberFormat(document.documentElement.lang || "en", {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    });
+    return { type: "custom", minMove: 10 ** -digits, formatter: (value) => number.format(value) };
+  }
+
   async function init(el) {
     const [, data] = await Promise.all([loadLibrary(), fetch(`/api/chart/${el.dataset.code}.json`).then((r) => r.json())]);
     const { createChart, AreaSeries, LineSeries, LineStyle } = window.LightweightCharts;
     const box = el.querySelector(".pc__chart");
     const color = el.dataset.color || "#8a96a8";
+    const format = priceFormat(data.history.at(-1)[1]);
     const chart = createChart(box, {
       autoSize: true,
       layout: {
@@ -48,6 +59,7 @@
         topColor: `${color}38`,
         bottomColor: `${color}00`,
         priceLineColor: color,
+        priceFormat: format,
       })
       .setData(toPoints(data.history));
 
@@ -59,6 +71,7 @@
         lastValueVisible: false,
         priceLineVisible: false,
         crosshairMarkerVisible: false,
+        priceFormat: format,
       });
     const low = band();
     const high = band();
@@ -73,6 +86,7 @@
         lineStyle: key === "consensus" ? LineStyle.Solid : LineStyle.Dashed,
         lastValueVisible: false,
         priceLineVisible: false,
+        priceFormat: format,
       });
       lines[key].setData(toPoints(data.forecast[key]));
     }

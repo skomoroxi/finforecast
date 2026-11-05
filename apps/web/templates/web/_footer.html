@@ -7,7 +7,7 @@
     </div>
     <nav class="footer__col" aria-label="{% translate 'Forecasts' %}">
       <p class="footer__title">{% translate "Forecasts" %}</p>
-      <ul>{% for g in nav_groups %}<li><a href="{{ g.url }}">{{ g.title }}</a></li>{% endfor %}</ul>
+      <ul>{% for g in nav_groups %}<li><a href="{{ g.url }}">{{ g.label }}</a></li>{% endfor %}</ul>
     </nav>
     <nav class="footer__col" aria-label="FinForecast">
       <p class="footer__title">FinForecast</p>

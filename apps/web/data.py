@@ -73,6 +73,14 @@ CLASS_PAGES = {
     "fx": ("currencies", "Currency forecasts"),
 }
 CLASS_ORDER = ("crypto", "stock", "metal", "energy", "etf_index", "fx")
+CLASS_LABELS = {
+    "crypto": "Crypto",
+    "stock": "Stocks",
+    "metal": "Metals",
+    "energy": "Energy",
+    "etf_index": "Indices",
+    "fx": "Currencies",
+}
 COUNTRY_PAGES = {
     "us": ("US-listed stock predictions", "us"),
     "germany": ("German stock predictions", "de"),
@@ -271,7 +279,8 @@ def cards_by_class() -> list[dict]:
         path, title = CLASS_PAGES[code]
         items = [c for c in everything if c["class"] == code]
         if items:
-            groups.append({"code": code, "title": _(title), "url": f"/{path}/", "cards": items})
+            label = _(CLASS_LABELS[code])
+            groups.append({"code": code, "title": _(title), "label": label, "url": f"/{path}/", "cards": items})
     return groups
 
 
