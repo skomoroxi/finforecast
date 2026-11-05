@@ -37,6 +37,7 @@
     const format = priceFormat(data.history.at(-1)[1]);
     const chart = createChart(box, {
       autoSize: true,
+      localization: { locale: document.documentElement.lang || "en" },
       layout: {
         background: { color: "#ffffff" },
         textColor: "rgba(24,29,39,0.62)",
