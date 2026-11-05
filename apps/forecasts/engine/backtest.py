@@ -39,7 +39,7 @@ def walk_forward(close: pd.Series, calendar: str, windows: dict, max_drift: floa
         reversion_fit = reversion.fit(log_train[-windows["reversion_bars"] :], max_drift)
         paths = {
             "arima": np.exp(arima.predict_log(arima_window, tuple(order), trend, longest)[0]),
-            "reversion": np.exp(reversion.predict_log(reversion_fit, longest)[0]),
+            "reversion": np.exp(reversion.predict_log(reversion_fit, longest, max_drift)[0]),
             "montecarlo": montecarlo.median_path(train[-1], mu, longest),
         }
         paths["consensus"] = np.mean([paths["arima"], paths["reversion"], paths["montecarlo"]], axis=0)

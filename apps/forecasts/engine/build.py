@@ -9,7 +9,7 @@ import pandas as pd
 from . import arima, montecarlo, reversion
 from .common import MethodForecast, bars_per_year, daily_drift_cap, failed, future_dates, sanity_check
 
-MODEL_VERSION = "1.0"
+MODEL_VERSION = "1.1"
 METHODS = ("arima", "reversion", "montecarlo")
 LONG_TERM_METHODS = ("reversion", "montecarlo")  # ARIMA adds nothing beyond 2030 (flat or pure drift)
 MONTHLY_UNTIL = 2030

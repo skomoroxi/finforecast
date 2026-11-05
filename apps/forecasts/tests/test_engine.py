@@ -68,6 +68,19 @@ def test_growth_cap_holds_on_a_runaway_series():
     assert yearly[0].value / float(close.iloc[-1]) < 1.25**years * 1.05
 
 
+def test_growth_cap_binds_a_price_far_below_its_trend():
+    t = np.arange(1500)
+    series = 100 * np.exp(0.0005 * t)
+    series[-200:] = series[-200] * np.exp(-0.01 * np.arange(200))  # ends far under the trend line
+    close = pd.Series(series, index=pd.bdate_range("2021-01-04", periods=1500))
+    run_date = close.index[-1].date()
+    points, _ = build.build(close, "fx", 0.25, run_date, model=((0, 1, 1), "n", "2026-01-01"))
+    last = float(close.iloc[-1])
+    for p in (p for p in points if p.method == "reversion" and p.horizon == "yearly"):
+        years = (date(p.target.year, 12, 31) - run_date).days / 365
+        assert p.value / last <= 1.25**years * 1.01
+
+
 def test_tiny_prices_survive_rounding():
     assert build.sig(0.00000473219) == pytest.approx(0.00000473219, rel=1e-6)
     close = prices(n=400, start=0.000005)["close"]

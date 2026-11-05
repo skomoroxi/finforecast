@@ -40,12 +40,17 @@ def fit(y: np.ndarray, max_slope: float | None = None) -> dict:
     }
 
 
-def predict_log(p: dict, steps: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def predict_log(p: dict, steps: int, max_slope: float | None = None) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     h = np.arange(1, steps + 1)
     decay = p["phi"] ** h
     mid = p["a"] + p["b"] * (p["n"] - 1 + h) + decay * p["e_last"]
     sd = p["sigma"] * np.sqrt((1 - decay**2) / (1 - p["phi"] ** 2))
     z = Z80 if INTERVAL == 0.8 else float(np.sqrt(2) * _erfinv(INTERVAL))
+    if max_slope is not None:
+        # The cap binds the path, not only the trend: a price far below its trend line
+        # must not climb back faster than the cap allows.
+        last = p["a"] + p["b"] * (p["n"] - 1) + p["e_last"]
+        mid = np.clip(mid, last - max_slope * h, last + max_slope * h)
     return mid, mid - z * sd, mid + z * sd
 
 
@@ -60,7 +65,7 @@ def forecast(
 ) -> MethodForecast:
     y = np.log(close.to_numpy()[-window_bars:])
     p = fit(y, max_slope)
-    mid, low, high = predict_log(p, len(dates))
+    mid, low, high = predict_log(p, len(dates), max_slope)
     half_life = np.log(0.5) / np.log(p["phi"]) if 0 < p["phi"] < 1 else None
     return MethodForecast(
         "reversion",
