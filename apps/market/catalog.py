@@ -1,5 +1,6 @@
 """The approved launch catalog (TECHNICAL-TASK §3.1). `seed_assets` loads it; the admin owns it afterwards."""
 
+import re
 from datetime import date
 
 CLASSES = [
@@ -109,7 +110,20 @@ INDEX_ETFS = [
     ("DAX", "DAX"),
 ]
 
+# Addresses the small site already has keep exactly this form.
+SLUGS = {"NVDA": "nvidia-stock-forecast"}
 FX_PAIRS = ["EUR/USD", "EUR/BRL", "EUR/PLN", "EUR/TRY", "EUR/GBP", "EUR/CHF"]
+
+
+def slug_for(row: dict) -> str:
+    if row["code"] in SLUGS:
+        return SLUGS[row["code"]]
+    plain = re.sub(r"\s*\(.*\)$", "", row["name"]).lower()
+    plain = re.sub(r"[^a-z0-9]+", "-", plain.replace("&", "")).strip("-")
+    if row["asset_class"] == "fx":
+        return f"{plain}-forecast"
+    middle = "stock-price" if row["asset_class"] == "stock" else "price"
+    return f"{plain}-{middle}-prediction"
 
 
 def asset_rows() -> list[dict]:
@@ -163,6 +177,10 @@ def asset_rows() -> list[dict]:
     add("BRENT", "Brent crude", "energy", "alphavantage", "BRENT", series_of="WTI")
     add("HEATOIL", "Heating oil", "energy", "fred", "DHOILNYH", unit="gallon")
 
+    listed = {code: "us" for code, _ in STOCKS_US} | {code: "asia" for code, _ in STOCKS_ASIA_ADR}
+    listed |= {code: "de" for code, _name, _adr, _xetra in STOCKS_GERMAN}
     for position, row in enumerate(rows, start=1):
         row["order"] = position * 10
+        row["slug"] = slug_for(row)
+        row["country"] = listed.get(row["code"], "")
     return rows

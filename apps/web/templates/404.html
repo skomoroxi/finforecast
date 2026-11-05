@@ -1,0 +1,9 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block main %}
+<section class="page-head section--dark on-dark"><div class="container">
+  <h1>{% translate "Page not found" %}</h1>
+  <p class="lead">{% translate "This page does not exist or has moved." %}</p>
+  <a class="btn btn--primary" href="/">{% translate "Back to all forecasts" %}</a>
+</div></section>
+{% endblock %}

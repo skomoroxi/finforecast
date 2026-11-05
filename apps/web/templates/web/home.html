@@ -1,0 +1,43 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block main %}
+{% translate "Price predictions for crypto, stocks, metals and energy" as hero_heading %}
+{% translate "FinForecast publishes daily price forecasts for the next 30 days, every month to 2030 and every year to 2035, calculated by three independent statistical models, together with a full technical analysis." as p1 %}
+{% translate "Everything updates automatically after each daily close: the numbers and how they are made, without opinions or hype." as p2 %}
+<section class="hero section--dark on-dark">
+  <div class="hero__inner container">
+    <div class="hero__text">
+      <h1>{{ hero_heading }}</h1>
+      <div class="hero__intro"><p>{{ p1 }}</p><p>{{ p2 }}</p></div>
+      <div class="disclaimer" role="note"><p>{% translate "These forecasts are statistical estimates based on historical prices, not financial advice. Past performance does not guarantee future results." %}</p></div>
+      <a class="btn btn--primary" href="#assets">{% translate "Browse forecasts" %}</a>
+    </div>
+  </div>
+</section>
+
+<div id="assets">
+{% for g in groups %}
+  <section class="section {% cycle 'section--soft' 'section--white' %}">
+    <div class="container">
+      <h2>{{ g.title }}</h2>
+      {% include "web/_cards.html" with cards=g.cards %}
+      {% if g.more %}<p class="more-link"><a class="btn btn--secondary" href="{{ g.url }}">{% translate "View all" %}</a></p>{% endif %}
+    </div>
+  </section>
+{% empty %}
+  <section class="section section--soft"><div class="container"><p>{% translate "Forecasts are being prepared." %}</p></div></section>
+{% endfor %}
+</div>
+
+<section class="section section--white">
+  <div class="container">
+    <h2 class="centered">{% translate "How our forecasts work" %}</h2>
+    <ul class="factors" style="--cols:4">
+      <li><strong>{% translate "1. Daily market data" %}</strong><p>{% translate "Each asset's daily price history is updated after the close from public market data providers." %}</p></li>
+      <li><strong>{% translate "2. Three models" %}</strong><p>{% translate "ARIMA, trend + mean reversion and a 10,000-path Monte Carlo simulation each forecast the price; the consensus is their average." %}</p></li>
+      <li><strong>{% translate "3. Technical analysis" %}</strong><p>{% translate "12 indicators, 12 moving averages and 5 sets of pivot points give a daily, weekly and monthly buy or sell reading." %}</p></li>
+      <li><strong>{% translate "4. Measured accuracy" %}</strong><p>{% blocktranslate %}Every forecast is stored and compared with what actually happened, so you can see how reliable the models are.{% endblocktranslate %} <a href="{% url 'accuracy' %}">{% translate "See the figures" %}</a></p></li>
+    </ul>
+  </div>
+</section>
+{% endblock %}

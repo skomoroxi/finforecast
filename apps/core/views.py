@@ -1,16 +1,9 @@
-from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
-from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.http import JsonResponse
 from django.views.decorators.cache import never_cache
 
 from apps.core.tasks import HEARTBEAT_KEY
-
-
-def home(request):
-    # Placeholder until the asset pages exist (milestone 6).
-    return render(request, "core/home.html")
 
 
 @never_cache
@@ -33,12 +26,3 @@ def healthz(request):
         pass
     ok = status["db"] and status["redis"]
     return JsonResponse(status, status=200 if ok else 503)
-
-
-def robots(request):
-    """Closed until launch (INDEXING=True), like the small site."""
-    if settings.INDEXING:
-        body = f"User-agent: *\nAllow: /\nDisallow: /{settings.ADMIN_URL}\n\nSitemap: {settings.SITE_URL}/sitemap.xml\n"
-    else:
-        body = "# Pre-launch: nothing is indexed yet.\nUser-agent: *\nDisallow: /\n"
-    return HttpResponse(body, content_type="text/plain; charset=utf-8")

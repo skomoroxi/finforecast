@@ -32,6 +32,10 @@ class Command(BaseCommand):
             created += was_created
 
         by_code = {a.code: a for a in Asset.objects.all()}
+        for row in rows:  # rows from before these fields existed
+            asset = by_code[row["code"]]
+            if not asset.slug:
+                Asset.objects.filter(pk=asset.pk).update(slug=row["slug"], country=row["country"])
         for row in rows:
             asset = by_code[row["code"]]
             parent = by_code.get(row.get("series_of"))

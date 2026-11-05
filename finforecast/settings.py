@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "apps.market",
     "apps.forecasts",
     "apps.content",
+    "apps.web",
 ]
 
 MIDDLEWARE = [
@@ -73,6 +74,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.core.context_processors.site",
+                "apps.web.context_processors.site_chrome",
             ],
         },
     },

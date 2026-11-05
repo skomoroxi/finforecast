@@ -1,0 +1,8 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block main %}
+<section class="page-head section--dark on-dark"><div class="container"><h1>{% translate "Forecast comparisons" %}</h1></div></section>
+<section class="section section--white"><div class="container">
+  <ul class="plain-list">{% for pair in pairs %}<li><a href="{% url 'comparison' pair.slug %}">{{ pair.left.name }} vs {{ pair.right.name }}</a></li>{% empty %}<li>{% translate "No comparisons yet." %}</li>{% endfor %}</ul>
+</div></section>
+{% endblock %}

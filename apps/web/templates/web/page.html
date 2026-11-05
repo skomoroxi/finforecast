@@ -1,0 +1,13 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block main %}
+<section class="page-head section--dark on-dark"><div class="container">
+  <h1>{{ page.title }}</h1>
+  {% if page.summary %}<p class="lead">{{ page.summary }}</p>{% endif %}
+  {% if page.reviewer %}<p class="meta">{% translate "Reviewed by" %} <a href="{% url 'author' page.reviewer.slug %}">{{ page.reviewer.name }}</a> · {{ page.updated_at|date:"Y-m-d" }}</p>{% endif %}
+</div></section>
+<section class="section section--white"><div class="container prose">
+  {{ page.body|safe }}
+  {% if assets %}<h2>{% translate "Related forecasts" %}</h2><ul>{% for a in assets %}<li><a href="{% url 'asset' a.slug %}">{{ a.name }}</a></li>{% endfor %}</ul>{% endif %}
+</div></section>
+{% endblock %}

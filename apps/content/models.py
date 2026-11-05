@@ -155,6 +155,54 @@ class AnalystTarget(models.Model):
             raise ValidationError("The low target is above the high target.")
 
 
+class Comparison(models.Model):
+    """An "X vs Y" page. The numbers come from the same data as the asset pages."""
+
+    slug = models.SlugField(max_length=100, unique=True)
+    left = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="+")
+    right = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="+")
+    enabled = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["slug"]
+
+    def __str__(self):
+        return f"{self.left} vs {self.right}"
+
+
+class Page(models.Model):
+    """Static pages, guides and blog posts, one row per language."""
+
+    class Kind(models.TextChoices):
+        STATIC = "static", "Static page"
+        GUIDE = "guide", "Guide"
+        BLOG = "blog", "Blog post"
+
+    kind = models.CharField(max_length=10, choices=Kind.choices)
+    slug = models.SlugField(max_length=120)
+    language = models.ForeignKey(Language, on_delete=models.CASCADE, related_name="pages")
+    title = models.CharField(max_length=200)
+    seo_title = models.CharField(max_length=70, blank=True)
+    meta_description = models.CharField(max_length=170, blank=True)
+    summary = models.CharField(max_length=300, blank=True)
+    body = models.TextField(help_text="HTML. Only administrators can edit it.")
+    reviewer = models.ForeignKey(Reviewer, null=True, blank=True, on_delete=models.SET_NULL)
+    assets = models.ManyToManyField(Asset, blank=True, related_name="pages")
+    published = models.BooleanField(default=False)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+        constraints = [models.UniqueConstraint(fields=["kind", "slug", "language"], name="one_page_per_slug")]
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        prefix = {"guide": "/guides/", "blog": "/blog/"}.get(self.kind, "/")
+        return f"{prefix}{self.slug}/"
+
+
 class Revision(models.Model):
     """Every saved version of a template or manual value, for history and rollback."""
 

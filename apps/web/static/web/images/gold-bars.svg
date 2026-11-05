@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 900" role="img" aria-label="Stacked gold bars">
+  <!-- Placeholder render (DESIGN §7): replace with an AI-generated render before launch. -->
+  <defs>
+    <radialGradient id="glow" cx="55%" cy="55%" r="60%">
+      <stop offset="0" stop-color="#3a4252" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#181d27" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="top" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff6d8"/>
+      <stop offset="0.45" stop-color="#e8c25a"/>
+      <stop offset="1" stop-color="#b8872b"/>
+    </linearGradient>
+    <linearGradient id="front" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d9a93e"/>
+      <stop offset="0.5" stop-color="#a87a22"/>
+      <stop offset="1" stop-color="#6b4a12"/>
+    </linearGradient>
+    <linearGradient id="side" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8a6418"/>
+      <stop offset="1" stop-color="#4a330a"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#fff" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <g id="bar">
+      <!-- top face, front face, side face of a trapezoid ingot -->
+      <path d="M40 0 L330 0 L370 40 L0 40 Z" fill="url(#top)"/>
+      <path d="M40 0 L330 0 L300 22 L70 22 Z" fill="url(#shine)" opacity="0.6"/>
+      <path d="M0 40 L370 40 L370 110 L0 110 Z" fill="url(#front)"/>
+      <path d="M370 40 L470 -30 L470 40 L370 110 Z" fill="url(#side)"/>
+      <path d="M330 0 L430 -70 L470 -30 L370 40 Z" fill="url(#top)" opacity="0.85"/>
+      <path d="M40 0 L140 -70 L430 -70 L330 0 Z" fill="url(#top)"/>
+      <path d="M150 -62 L420 -62 L340 -8 L70 -8 Z" fill="url(#shine)" opacity="0.35"/>
+    </g>
+  </defs>
+  <rect width="800" height="900" fill="#181d27"/>
+  <rect width="800" height="900" fill="url(#glow)"/>
+  <ellipse cx="430" cy="760" rx="330" ry="40" fill="#000" opacity="0.45"/>
+  <use href="#bar" transform="translate(150 640)"/>
+  <use href="#bar" transform="translate(290 600)"/>
+  <use href="#bar" transform="translate(210 470)"/>
+  <use href="#bar" transform="translate(260 340)"/>
+</svg>

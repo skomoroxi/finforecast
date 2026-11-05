@@ -1,0 +1,25 @@
+{% load static i18n %}<!doctype html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ meta_title|default:"FinForecast" }}</title>
+  {% if meta_description %}<meta name="description" content="{{ meta_description }}">{% endif %}
+  <link rel="canonical" href="{{ SITE_URL }}{{ request.path }}">
+  <meta name="robots" content="{% if INDEXING %}index, follow, max-image-preview:large{% else %}noindex, nofollow{% endif %}">
+  <link rel="icon" href="{% static 'web/images/favicon.svg' %}" type="image/svg+xml">
+  <link rel="preload" href="{% static 'web/fonts/old-standard-tt-latin-400-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{% static 'web/fonts/inter-latin-400-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{% static 'web/site.css' %}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <a class="skip-link" href="#main">{% translate "Skip to content" %}</a>
+  {% include "web/_ticker.html" %}
+  {% include "web/_nav.html" %}
+  <main id="main">{% block main %}{% endblock %}</main>
+  {% include "web/_footer.html" %}
+  <script src="{% static 'web/app.js' %}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

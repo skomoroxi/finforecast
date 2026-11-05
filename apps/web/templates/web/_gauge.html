@@ -1,0 +1,17 @@
+{% load i18n %}
+<figure class="gauge">
+  <figcaption class="gauge__title">{{ g.title }}</figcaption>
+  <svg viewBox="0 0 200 110" role="img" aria-label="{{ g.title }}: {{ g.verdict }}">
+    {% for a in g.arcs %}<path d="{{ a.d }}" fill="none" stroke="{{ a.color }}" stroke-width="12"/>{% endfor %}
+    <text x="14" y="108" class="lbl">{% translate "Sell" %}</text>
+    <text x="186" y="108" class="lbl" text-anchor="end">{% translate "Buy" %}</text>
+    <line x1="100" y1="96" x2="{{ g.nx }}" y2="{{ g.ny }}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="100" cy="96" r="5" fill="currentColor"/>
+  </svg>
+  <div class="gauge__verdict {{ g.tone }}">{{ g.verdict }}</div>
+  <dl class="gauge__counts">
+    <div><dt>{% translate "Buy" %}</dt><dd class="buy">{{ g.buy }}</dd></div>
+    <div><dt>{% translate "Neutral" %}</dt><dd>{{ g.neutral }}</dd></div>
+    <div><dt>{% translate "Sell" %}</dt><dd class="sell">{{ g.sell }}</dd></div>
+  </dl>
+</figure>

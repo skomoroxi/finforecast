@@ -1,0 +1,19 @@
+{% load i18n %}{% if ticker_items %}
+<div class="ticker on-dark" role="region" aria-label="{% translate 'Latest prices' %}">
+  <div class="ticker__inner container">
+    <ul class="ticker__list">
+      {% for c in ticker_items %}
+        <li class="ticker__item">
+          <span class="dot"{% if c.color %} style="background:{{ c.color }}"{% endif %} aria-hidden="true"></span>
+          <a class="ticker__link" href="{{ c.url }}"{% if c.stream %} data-stream="{{ c.stream }}"{% elif c.live %} data-quote="{{ c.code }}"{% endif %}>
+            <span class="name">{{ c.name }}</span>
+            <span class="price"><span data-price>{{ c.price }}</span><small>{{ c.unit }}</small></span>
+            <span class="chg {{ c.dir }}" data-change>{{ c.change }}</span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+    <span class="ticker__status"><span class="pulse" aria-hidden="true"></span>{% translate "Updated daily" %}</span>
+  </div>
+</div>
+{% endif %}

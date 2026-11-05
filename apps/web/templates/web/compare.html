@@ -1,0 +1,15 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block main %}
+<section class="page-head section--dark on-dark"><div class="container">
+  <nav class="crumbs" aria-label="{% translate 'Breadcrumb' %}"><a href="/">{% translate "Home" %}</a> <span aria-hidden="true">›</span> <a href="{% url 'comparisons' %}">{% translate "Comparisons" %}</a></nav>
+  <h1>{% blocktranslate with left=pair.left.name right=pair.right.name %}{{ left }} vs {{ right }} forecast{% endblocktranslate %}</h1>
+</div></section>
+<section class="section section--white">
+  <div class="container">
+    {% include "web/_table.html" with t=table %}
+    <p class="hub-links"><a class="btn btn--secondary" href="{{ left.url }}">{{ left.name }}</a> <a class="btn btn--secondary" href="{{ right.url }}">{{ right.name }}</a></p>
+    <p class="meta">{% translate "All figures come from the same daily models as the asset pages. This comparison is information, not a recommendation." %}</p>
+  </div>
+</section>
+{% endblock %}

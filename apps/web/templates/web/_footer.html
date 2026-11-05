@@ -1,0 +1,37 @@
+{% load i18n %}
+<footer class="footer">
+  <div class="footer__top container">
+    <div class="footer__brand">
+      <a class="wordmark" href="/">FinForecast</a>
+      <p class="small">{% translate "Statistical price forecasts for crypto, stocks, metals, energy and currencies, updated every day from public market data." %}</p>
+    </div>
+    <nav class="footer__col" aria-label="{% translate 'Forecasts' %}">
+      <p class="footer__title">{% translate "Forecasts" %}</p>
+      <ul>{% for g in nav_groups %}<li><a href="{{ g.url }}">{{ g.title }}</a></li>{% endfor %}</ul>
+    </nav>
+    <nav class="footer__col" aria-label="FinForecast">
+      <p class="footer__title">FinForecast</p>
+      <ul>
+        <li><a href="{% url 'methodology' %}">{% translate "Methodology" %}</a></li>
+        <li><a href="{% url 'accuracy' %}">{% translate "Model accuracy" %}</a></li>
+        <li><a href="{% url 'comparisons' %}">{% translate "Comparisons" %}</a></li>
+        <li><a href="{% url 'guides' %}">{% translate "Guides" %}</a></li>
+        <li><a href="{% url 'blog' %}">{% translate "Blog" %}</a></li>
+        <li><a href="{% url 'about' %}">{% translate "About" %}</a></li>
+      </ul>
+    </nav>
+    <nav class="footer__col" aria-label="{% translate 'Legal' %}">
+      <p class="footer__title">{% translate "Legal" %}</p>
+      <ul>
+        <li><a href="{% url 'disclaimer' %}">{% translate "Disclaimer" %}</a></li>
+        <li><a href="{% url 'privacy' %}">{% translate "Privacy" %}</a></li>
+      </ul>
+    </nav>
+  </div>
+  <div class="footer__band on-dark">
+    <div class="container">
+      <p><strong>{% translate "Not financial advice." %}</strong> {% translate "FinForecast publishes statistical model output for information only. Forecasts can be wrong, and past performance does not guarantee future results. Do your own research before making investment decisions." %}</p>
+      <p class="meta">{% translate "Market data: Twelve Data, Alpha Vantage, Binance, Kraken, Finnhub, FRED." %} © {% now "Y" %} FinForecast.</p>
+    </div>
+  </div>
+</footer>

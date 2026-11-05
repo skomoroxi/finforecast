@@ -1,0 +1,276 @@
+{% extends "web/base.html" %}
+{% load static i18n web_tags %}
+{% block main %}
+{% blocktranslate asvar updated_line with date=updated name=page.reviewer.name %}Updated {{ date }} · Reviewed by {{ name }}{% endblocktranslate %}
+{% translate "See today's forecast" as cta_label %}
+{% with "web/images/"|add:hero_image as hero_src %}
+  {% include "web/_hero.html" with heading=page.h1 updated=updated_line intro=page.intro crumb=asset.name cta_href="#summary" %}
+{% endwith %}
+
+{% if page.show.summary %}
+<section id="summary" class="section section--white">
+  <div class="container">
+    <h2>{{ page.h_summary }}</h2>
+    {% if stale %}<p class="stale" role="status">{% blocktranslate %}The daily update is delayed: these forecasts use data as of {{ data_date }}.{% endblocktranslate %}</p>{% endif %}
+    {% for p in page.summary %}<p class="lead">{{ p }}</p>{% endfor %}
+    {% for p in page.price_note %}<p class="meta">{{ p }}</p>{% endfor %}
+    <div class="glance">{% for card in glance %}{% include "web/_fcard.html" %}{% endfor %}</div>
+    {% if verdict %}
+      <p class="pill-row">{% translate "Technical signal today:" %} <a class="pill {{ verdict_tone }}" href="#technical-analysis">{{ verdict }}</a> <span class="meta">{% translate "daily timeframe" %}</span></p>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+{% include "web/_blocks.html" with after="summary" %}
+
+{% if page.show.chart and chart %}
+<section id="chart" class="section section--soft">
+  <div class="container">
+    <h2>{{ page.h_chart }}</h2>
+    <div class="pc" data-code="{{ asset.code }}" data-color="{{ chart_color }}"{% if live_stream %} data-stream="{{ live_stream }}"{% elif live_quote %} data-quote="{{ asset.code }}"{% endif %}>
+      <div class="pc__head">
+        <div class="pc__price"><span class="pc__arrow {{ chart.dir }}" aria-hidden="true">{{ chart.arrow }}</span><span data-price>{{ chart.price }}</span><small>{{ chart.unit }}</small></div>
+        <dl class="pc__stats">
+          <div><dt>{% translate "Change (abs)" %}</dt><dd class="{{ chart.dir }}">{{ chart.change }} · {{ chart.abs }}</dd></div>
+          <div><dt>{% translate "Day high" %}</dt><dd>{{ chart.high }}</dd></div>
+          <div><dt>{% translate "Day low" %}</dt><dd>{{ chart.low }}</dd></div>
+        </dl>
+        <p class="meta pc__asof">{% blocktranslate with date=chart.date %}Close of {{ date }}{% endblocktranslate %}{% if chart.estimated %} · {% translate "Some values on this chart are estimates (see methodology)." %}{% endif %}</p>
+      </div>
+      <div class="pc__controls">
+        <label><span class="visually-hidden">{% translate "Time range" %}</span>
+          <select class="pc__range">
+            <option value="1M">{% translate "1 month" %}</option>
+            <option value="6M">{% translate "6 months" %}</option>
+            <option value="1Y" selected>{% translate "1 year" %}</option>
+            <option value="5Y">{% translate "5 years" %}</option>
+            <option value="10Y">{% translate "10 years" %}</option>
+            <option value="ALL">{% translate "All" %}</option>
+          </select>
+        </label>
+        <label><span class="visually-hidden">{% translate "Forecast lines" %}</span>
+          <select class="pc__fc">
+            <option value="all" selected>{% translate "Forecast: all models" %}</option>
+            <option value="consensus">{% translate "Forecast: consensus" %}</option>
+            <option value="none">{% translate "Forecast: hidden" %}</option>
+          </select>
+        </label>
+        <ul class="pc__legend" aria-label="{% translate 'Legend' %}">
+          <li><i style="background:{{ chart_color }}"></i>{{ asset.name }}</li>
+          <li><i class="dash c-arima"></i>ARIMA</li>
+          <li><i class="dash c-reversion"></i>{% translate "Trend + reversion" %}</li>
+          <li><i class="dash c-montecarlo"></i>Monte Carlo</li>
+          <li><i class="dash c-consensus"></i>{% translate "Consensus" %}</li>
+          <li><i class="band"></i>P10–P90</li>
+        </ul>
+      </div>
+      <div class="pc__chart" role="img" aria-label="{{ page.h_chart }}">
+        <noscript><p class="meta">{% translate "The interactive chart needs JavaScript. All forecast values are listed in the tables on this page." %}</p></noscript>
+      </div>
+      <ul class="pc__periods">
+        {% for p in chart.periods %}<li><span class="meta">{{ p.label }}</span><strong class="{{ p.dir }}">{{ p.text }}</strong></li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+</section>
+{% endif %}
+{% include "web/_blocks.html" with after="chart" %}
+
+{% if page.show.next30 %}
+<section id="next-30-days" class="section section--white">
+  <div class="container">
+    <h2>{{ page.h_next30 }}</h2>
+    <div class="cols">
+      <div>{% for p in page.next30 %}<p>{{ p }}</p>{% endfor %}</div>
+      <div>
+        {% if page.show.tomorrow %}
+          <h3>{{ page.h_tomorrow }}</h3>
+          <p>
+            {% if tomorrow %}{{ tomorrow.label }} ({{ tomorrow.date }}): <strong>{{ tomorrow.value }}</strong> <span class="meta">({{ tomorrow.low }} – {{ tomorrow.high }})</span><br>{% endif %}
+            {% if week %}{{ week.label }} ({{ week.date }}): <strong>{{ week.value }}</strong> <span class="meta">({{ week.low }} – {{ week.high }})</span>{% endif %}
+          </p>
+        {% endif %}
+      </div>
+    </div>
+    {% include "web/_table.html" with t=daily_table %}
+  </div>
+</section>
+{% endif %}
+{% include "web/_blocks.html" with after="next30" %}
+
+{% if page.show.this_year and this_year %}
+<section id="forecast-{{ this_year.year }}" class="section section--soft">
+  <div class="container grid-2 year">
+    <div class="year__text">
+      <h2 class="year__heading">{{ page.h_this_year }}</h2>
+      {% for p in this_year.paragraphs %}<p>{{ p|strong }}</p>{% endfor %}
+      <div class="year__card">{% include "web/_fcard.html" with card=this_year.card %}</div>
+    </div>
+    <div class="year__aside">{% include "web/_table.html" with t=this_year.table %}</div>
+  </div>
+</section>
+{% endif %}
+{% include "web/_blocks.html" with after="this_year" %}
+
+{% if page.show.five_years %}
+<section id="next-5-years" class="section section--white">
+  <div class="container">
+    <h2>{{ page.h_five_years }}</h2>
+    <p>{% translate "The table compares the yearly average of each model. ARIMA follows recent price behaviour, trend + reversion pulls the price back toward its long-run trend, and Monte Carlo continues the long-run growth rate, capped at 25% a year. The consensus is their average." %}</p>
+    {% include "web/_table.html" with t=summary_table %}
+  </div>
+</section>
+{% for y in later_years %}
+<section id="forecast-{{ y.year }}" class="section {% if y.dark %}section--dark on-dark{% elif y.variant == 'soft' %}section--soft{% else %}section--white{% endif %}">
+  <div class="container grid-2 year{% if y.reverse %} year--reverse{% endif %}">
+    <div class="year__text">
+      <h3 class="year__heading">{{ y.heading }}</h3>
+      {% for p in y.paragraphs %}<p>{{ p|strong }}</p>{% endfor %}
+      <div class="year__card">{% include "web/_fcard.html" with card=y.card %}</div>
+    </div>
+    <div class="year__aside">{% include "web/_table.html" with t=y.table %}</div>
+  </div>
+</section>
+{% endfor %}
+{% endif %}
+{% include "web/_blocks.html" with after="five_years" %}
+
+{% if page.show.outlook and long_term_table %}
+<section id="outlook" class="section section--dark on-dark">
+  <div class="container grid-2">
+    <div>
+      <h2>{{ page.h_outlook }}</h2>
+      {% for p in page.outlook %}<p>{{ p }}</p>{% endfor %}
+    </div>
+    {% include "web/_table.html" with t=long_term_table %}
+  </div>
+</section>
+{% endif %}
+{% include "web/_blocks.html" with after="outlook" %}
+
+{% if page.show.ta and technical_panels %}
+<section id="technical-analysis" class="section section--soft">
+  <div class="container">
+    <h2>{{ page.h_ta }}</h2>
+    {% for p in page.technical %}<p>{{ p }}</p>{% endfor %}
+    <div class="ta" data-tabs>
+      <div class="ta__tabs" role="tablist" aria-label="{% translate 'Timeframe' %}">
+        {% for panel in technical_panels %}
+          <button type="button" role="tab" id="ta-tab-{{ panel.key }}" aria-controls="ta-panel-{{ panel.key }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}" tabindex="{% if forloop.first %}0{% else %}-1{% endif %}">{{ panel.label }}</button>
+        {% endfor %}
+      </div>
+      {% for panel in technical_panels %}
+        <div class="ta__panel" role="tabpanel" id="ta-panel-{{ panel.key }}" aria-labelledby="ta-tab-{{ panel.key }}"{% if not forloop.first %} hidden{% endif %}>
+          <div class="ta__gauges">{% for g in panel.gauges %}{% include "web/_gauge.html" %}{% endfor %}</div>
+          <div class="ta__tables">
+            {% for t in panel.tables %}{% include "web/_table.html" %}{% endfor %}
+            {% if panel.pivots %}<div class="ta__pivots">{% include "web/_table.html" with t=panel.pivots %}</div>{% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% include "web/_blocks.html" with after="ta" %}
+
+{% if page.show.analysts and analysts_table %}
+<section id="analysts" class="section section--white">
+  <div class="container">
+    <h2>{{ page.h_analysts }}</h2>
+    {% include "web/_table.html" with t=analysts_table %}
+    <ul class="sources">{% for e in page.analysts %}<li><a href="{{ e.source_url }}" rel="nofollow noopener">{{ e.institution }}: {{ e.source_title }}</a></li>{% endfor %}</ul>
+  </div>
+</section>
+{% endif %}
+{% include "web/_blocks.html" with after="analysts" %}
+
+{% if page.show.drivers and page.drivers %}
+<section id="drivers" class="section section--white">
+  <div class="container">
+    <h2 class="centered">{{ page.h_drivers }}</h2>
+    <ol class="factors ranked" style="--cols:4">
+      {% for item in page.drivers %}<li><strong>{{ item.title }}</strong><p>{{ item.text }}</p></li>{% endfor %}
+    </ol>
+  </div>
+</section>
+{% endif %}
+{% include "web/_blocks.html" with after="drivers" %}
+
+{% if page.show.history %}
+<section id="history" class="section section--soft">
+  <div class="container">
+    <h2>{{ page.h_history }}</h2>
+    <p>{% translate "Yearly average, highest and lowest daily close, and the change over each year, from the same daily data the forecasts use." %}</p>
+    {% include "web/_table.html" with t=history_table %}
+  </div>
+</section>
+{% endif %}
+{% include "web/_blocks.html" with after="history" %}
+
+{% if page.show.investment %}
+<section id="investment" class="section section--white">
+  <div class="container">
+    <h2>{{ page.h_investment }}</h2>
+    <p class="lead">{% translate "There is no single answer: it depends on your goals, time horizon and risk tolerance." %}{% if volatility %} {% blocktranslate with name=asset.name %}{{ name }} has a recent yearly volatility of about {{ volatility }}.{% endblocktranslate %}{% endif %}</p>
+    <div class="bullbear">
+      <div><h3>{% translate "Bull case" %}</h3><ul>{% for b in page.bull %}<li>{{ b }}</li>{% endfor %}</ul></div>
+      <div><h3>{% translate "Bear case" %}</h3><ul>{% for b in page.bear %}<li>{{ b }}</li>{% endfor %}</ul></div>
+    </div>
+    <h3>{% translate "Risks to keep in mind" %}</h3>
+    <ul class="checklist">
+      {% if risk_note %}<li>{{ risk_note }}</li>{% endif %}
+      {% for r in page.risks %}<li>{{ r }}</li>{% endfor %}
+      <li>{% translate "Statistical forecasts can be wrong; see the accuracy figures below." %}</li>
+    </ul>
+    <p class="meta">{% translate "This section is general information, not personal investment advice." %}</p>
+  </div>
+</section>
+{% endif %}
+{% include "web/_blocks.html" with after="investment" %}
+
+{% if page.show.accuracy %}
+<section id="accuracy" class="section section--soft">
+  <div class="container grid-2">
+    <h2>{{ page.h_accuracy }}</h2>
+    <div class="cta__body">
+      <p>{% translate "Three statistical models run every day on the full daily price history: ARIMA (short-term price behaviour), trend + mean reversion (the long-run trend and how far the price is from it) and Monte Carlo (10,000 simulated price paths). The consensus is their average." %}</p>
+      {% for p in page.accuracy %}<p>{{ p }}</p>{% endfor %}
+      {% if accuracy_table %}{% include "web/_table.html" with t=accuracy_table %}{% endif %}
+      {% if matured_table %}{% include "web/_table.html" with t=matured_table %}{% endif %}
+      <a class="btn btn--secondary" href="{% url 'methodology' %}">{% translate "Read the full methodology" %}</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+{% include "web/_blocks.html" with after="accuracy" %}
+
+{% if page.show.faq %}
+<section id="faq" class="section section--faq">
+  <div class="container">
+    <h2 class="faq__title">{{ page.h_faq }}</h2>
+    <div class="faq">
+      {% for item in page.faq %}
+        <details class="faq__item">
+          <summary><span>{{ item.title }}</span><svg class="chev" viewBox="0 0 12 12" width="14" height="14" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></summary>
+          <p>{{ item.text }}</p>
+        </details>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% include "web/_blocks.html" with after="faq" %}
+
+{% if related %}
+<section class="section section--white">
+  <div class="container">
+    <h2>{% translate "Related forecasts" %}</h2>
+    {% include "web/_cards.html" with cards=related %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'web/chart.js' %}" data-lib="{% static 'web/lightweight-charts.standalone.production.js' %}" defer></script>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block main %}
+<section class="page-head section--dark on-dark"><div class="container">
+  <nav class="crumbs" aria-label="{% translate 'Breadcrumb' %}"><a href="/">{% translate "Home" %}</a> <span aria-hidden="true">›</span> <span aria-current="page">{{ heading }}</span></nav>
+  <h1>{{ heading }}</h1>
+</div></section>
+<section class="section section--soft">
+  <div class="container">
+    {% if countries %}
+      <p class="hub-links">{% for slug, info in countries %}<a class="btn btn--secondary" href="{% url 'hub_country' slug %}">{% translate info.0 %}</a> {% endfor %}</p>
+    {% endif %}
+    {% include "web/_cards.html" %}
+  </div>
+</section>
+{% endblock %}

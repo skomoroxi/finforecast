@@ -1,0 +1,14 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block main %}
+<section class="page-head section--dark on-dark"><div class="container"><h1>{{ heading }}</h1></div></section>
+<section class="section section--white"><div class="container">
+  <ul class="plain-list">
+    {% for p in pages %}
+      <li><a href="{{ p.get_absolute_url }}">{{ p.title }}</a>{% if p.summary %}<p class="meta">{{ p.summary }}</p>{% endif %}</li>
+    {% empty %}
+      <li>{% translate "Nothing published yet." %}</li>
+    {% endfor %}
+  </ul>
+</div></section>
+{% endblock %}

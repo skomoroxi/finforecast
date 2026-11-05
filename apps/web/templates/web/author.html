@@ -1,0 +1,11 @@
+{% extends "web/base.html" %}
+{% block main %}
+<section class="page-head section--dark on-dark"><div class="container">
+  <h1>{{ reviewer.name }}</h1>
+  {% if reviewer.job_title %}<p class="lead">{{ reviewer.job_title }}</p>{% endif %}
+</div></section>
+<section class="section section--white"><div class="container prose">
+  {% if reviewer.photo_url %}<img src="{{ reviewer.photo_url }}" alt="{{ reviewer.name }}" width="160" height="160">{% endif %}
+  {% if bio %}<p>{{ bio.bio }}</p>{% endif %}
+</div></section>
+{% endblock %}

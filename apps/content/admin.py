@@ -9,10 +9,12 @@ from . import csvio, drafts, services, validation
 from .editor import editor_view
 from .models import (
     AnalystTarget,
+    Comparison,
     CustomBlock,
     Draft,
     Language,
     Override,
+    Page,
     Reviewer,
     ReviewerBio,
     Revision,
@@ -211,6 +213,20 @@ class AnalystTargetAdmin(ModelAdmin):
     ]
     list_filter = ["kind", "show", "asset"]
     search_fields = ["asset__code", "institution", "source_title"]
+
+
+@admin.register(Page)
+class PageAdmin(ModelAdmin):
+    list_display = ["title", "kind", "language", "slug", "published", "updated_at"]
+    list_filter = ["kind", "language", "published"]
+    search_fields = ["title", "slug", "body"]
+    prepopulated_fields = {"slug": ["title"]}
+    autocomplete_fields = ["assets"]
+
+
+@admin.register(Comparison)
+class ComparisonAdmin(ModelAdmin):
+    list_display = ["slug", "left", "right", "enabled"]
 
 
 @admin.register(Revision)

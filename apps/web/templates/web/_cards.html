@@ -1,0 +1,19 @@
+{% load i18n %}
+<ul class="cards">
+  {% for c in cards %}
+    <li class="card">
+      <a class="card__link" href="{{ c.url }}">
+        <span class="card__top">
+          <span>
+            <span class="card__name serif">{{ c.name }}</span>
+            <span class="meta">{{ c.code }}</span>
+          </span>
+          {% if c.spark %}<svg class="spark {{ c.spark.trend }}" viewBox="0 0 {{ c.spark.width }} {{ c.spark.height }}" width="{{ c.spark.width }}" height="{{ c.spark.height }}" aria-hidden="true"><polyline points="{{ c.spark.points }}" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/></svg>{% endif %}
+        </span>
+        <span class="card__price">{{ c.price }}<small>{{ c.unit }}</small> <span class="card__chg {{ c.dir }}">{{ c.change }}</span></span>
+        {% if c.next != "—" %}<span class="card__next meta">{% translate "30-day consensus:" %} <strong>{{ c.next }}</strong> <span class="{{ c.next_dir }}">({{ c.next_change }})</span></span>{% endif %}
+        <span class="card__cta">{% translate "View forecast" %} →</span>
+      </a>
+    </li>
+  {% endfor %}
+</ul>

@@ -1,0 +1,21 @@
+{% load i18n %}
+<div class="dt{% if t.dark %} dt--dark{% endif %}"{% if t.more %} data-collapsed="true"{% endif %}>
+  <div class="dt__scroll" tabindex="0" role="region" aria-label="{{ t.caption }}">
+    <table>
+      <caption>{{ t.caption }}</caption>
+      <thead><tr>{% for c in t.columns %}<th scope="col" class="{{ c.align }}">{{ c.label }}</th>{% endfor %}</tr></thead>
+      <tbody>
+        {% for r in t.rows %}
+          <tr{% if r.extra %} class="extra"{% endif %}>
+            {% for c in r.cells %}
+              {% if c.header %}<th scope="row" class="{{ c.align }} {{ c.tone }}{% if c.strong %} strong{% endif %}">{{ c.text }}</th>
+              {% else %}<td class="{{ c.align }} {{ c.tone }}{% if c.strong %} strong{% endif %}">{{ c.text }}</td>{% endif %}
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if t.more %}<button class="btn--text dt__more" type="button" aria-expanded="false" data-total="{{ t.more }}" data-less="{% translate 'Show fewer rows' %}" data-all="{% translate 'Show all rows' %}">{% translate "Show all rows" %} ({{ t.more }})</button>{% endif %}
+  {% if t.note %}<p class="meta dt__note">{{ t.note }}</p>{% endif %}
+</div>

@@ -44,6 +44,8 @@ class AssetClass(models.Model):
 class Asset(models.Model):
     code = models.CharField(max_length=20, unique=True)
     name = models.CharField(max_length=80)
+    slug = models.SlugField(max_length=80, blank=True, help_text="Address of the English page.")
+    country = models.CharField(max_length=10, blank=True, help_text="Listing: us, de or asia.")
     asset_class = models.ForeignKey(AssetClass, on_delete=models.PROTECT, related_name="assets")
     currency = models.CharField(max_length=3, default="USD")
     unit = models.CharField(max_length=30, blank=True)

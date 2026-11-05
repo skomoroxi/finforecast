@@ -1,0 +1,17 @@
+{% load static i18n %}
+<section class="hero section--dark on-dark">
+  <img class="hero__image" src="{% static hero_src %}" alt="" width="800" height="900" fetchpriority="high">
+  <div class="hero__inner container">
+    <div class="hero__text">
+      {% if crumb %}<nav class="crumbs" aria-label="{% translate 'Breadcrumb' %}"><a href="/">{% translate "Home" %}</a> <span aria-hidden="true">›</span> <span aria-current="page">{{ crumb }}</span></nav>{% endif %}
+      <h1>{{ heading }}</h1>
+      {% if updated %}<p class="meta hero__updated">{{ updated }}</p>{% endif %}
+      <div class="hero__intro">{% for p in intro %}<p>{{ p }}</p>{% endfor %}</div>
+      <div class="disclaimer" role="note">
+        <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><rect x="0.75" y="0.75" width="18.5" height="18.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M10 8.5v6M10 5.5v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <p>{% translate "These forecasts are statistical estimates based on historical prices, not financial advice. Past performance does not guarantee future results." %}</p>
+      </div>
+      {% if cta_href %}<a class="btn btn--primary" href="{{ cta_href }}">{{ cta_label }}</a>{% endif %}
+    </div>
+  </div>
+</section>

@@ -2,10 +2,12 @@
 
 import bisect
 import logging
+import time
 from datetime import date, timedelta
 from decimal import Decimal
 from statistics import median
 
+from django.core.cache import cache
 from django.db.models import Max
 from django.utils import timezone
 
@@ -276,5 +278,6 @@ def run_assets(task: str, assets, action=update_asset, **kwargs) -> FetchRun:
             FetchResult.objects.create(run=run, asset=asset, ok=True, source=source, bars=bars, last_date=last_date)
     run.finished_at = timezone.now()
     run.save(update_fields=["finished_at", "ok_count", "error_count"])
+    cache.set("web:version", int(time.time() * 1000), None)  # new data: cached pages are out of date
     log.info("%s: %d ok, %d failed", task, run.ok_count, run.error_count)
     return run

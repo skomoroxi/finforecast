@@ -64,11 +64,13 @@ def add_forecast(asset, price=100.0):
         for method, factor in (("consensus", 1), ("reversion", 0.8), ("montecarlo", 1.2)):
             point(method, "yearly", today.replace(year=year, month=1, day=1), price * factor * 1.6)
     ForecastPoint.objects.bulk_create(rows)
-    summary = {"overall": {"verdict": "buy"}}
+    tally = {"buy": 8, "sell": 2, "neutral": 1, "verdict": "buy"}
+    average = {"value": price * 0.9, "action": "buy"}
     frame = {
-        "summary": summary,
+        "summary": {"overall": tally, "oscillators": tally, "moving_averages": tally},
         "oscillators": [{"name": "rsi_14", "value": 61.5, "action": "buy"}],
-        "moving_averages": [{"period": 200, "simple": {"value": 90.0, "action": "buy"}}],
+        "moving_averages": [{"period": 200, "simple": average, "exponential": average}],
+        "pivots": {"classic": {"s1": price * 0.9, "p": price, "r1": price * 1.1}},
     }
     TechnicalSnapshot.objects.create(
         asset=asset,

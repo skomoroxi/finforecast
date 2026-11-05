@@ -1,0 +1,8 @@
+{% load web_tags %}{% for block in blocks_after|get_item:after %}
+<section class="section section--white custom-block">
+  <div class="container">
+    <h2>{{ block.title }}</h2>
+    {% for p in block.paragraphs %}<p>{{ p|strong }}</p>{% endfor %}
+  </div>
+</section>
+{% endfor %}

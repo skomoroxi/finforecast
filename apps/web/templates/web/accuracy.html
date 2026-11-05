@@ -1,0 +1,15 @@
+{% extends "web/base.html" %}
+{% load i18n %}
+{% block main %}
+<section class="page-head section--dark on-dark"><div class="container">
+  <h1>{% translate "How accurate are our forecasts?" %}</h1>
+</div></section>
+<section class="section section--white">
+  <div class="container">
+    <p class="lead">{% translate "Every forecast is stored and compared with the real price once its date arrives. Until an asset has 30 published forecasts to compare, the figures come from a walk-forward test: the models are refit at past dates on the data available then, and checked against what happened next." %}</p>
+    <p>{% translate "A direction figure near 50% means the models do no better than chance at calling a rise or fall. Read these forecasts as a statistical range, not as a prediction of what the price will do." %}</p>
+    {% include "web/_table.html" with t=methods %}
+    {% include "web/_table.html" with t=assets %}
+  </div>
+</section>
+{% endblock %}
