@@ -1,5 +1,7 @@
 """The approved launch catalog (TECHNICAL-TASK §3.1). `seed_assets` loads it; the admin owns it afterwards."""
 
+from datetime import date
+
 CLASSES = [
     # code, name, calendar, default unit, max daily change
     ("crypto", "Cryptocurrencies", "crypto", "coin", 0.6),
@@ -129,9 +131,16 @@ def asset_rows() -> list[dict]:
             fallback_source="binance",
             fallback_symbol=f"{code}USDT",
         )
-    next(r for r in rows if r["code"] == "S").update(history_source="binance", history_symbol="FTMUSDT")
     for code, name in CRYPTO_BINANCE:
         add(code, name, "crypto", "binance", f"{code}USDT")
+
+    by_code = {r["code"]: r for r in rows}
+    # Twelve Data's S/USD before Sonic's launch is an unrelated token; history is Fantom's on Binance.
+    by_code["S"].update(history_source="binance", history_symbol="FTMUSDT", main_from=date(2025, 1, 14))
+    # EOS became Vaulta (ticker A) in May 2025; Binance stopped EOSUSDT then.
+    by_code["EOS"].update(symbol="AUSDT", history_source="binance", history_symbol="EOSUSDT")
+    # Binance stopped TONUSDT on 2026-06-30 and Twelve Data has no TON.
+    by_code["TON"].update(source="kraken", symbol="TONUSD", history_source="binance", history_symbol="TONUSDT")
 
     for code, name in STOCKS_US + STOCKS_ASIA_ADR:
         add(code, name, "stock", "twelvedata", code, live_symbol=code)

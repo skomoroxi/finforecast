@@ -16,6 +16,7 @@ log = logging.getLogger(__name__)
 
 FULL_HISTORY = 5000
 RECENT_BARS = 10
+STALE_DAYS = 10  # newest bar older than this means the feed has died, whatever the HTTP status says
 RATIO_DAYS = 100
 RATIO_MIN_DAYS = 20
 RATIO_MAX_JUMP = Decimal("0.10")
@@ -34,7 +35,12 @@ class RatioPaused(SourceError):
 
 def clean_bars(bars: list[Bar], calendar: str, today: date) -> list[Bar]:
     """Drop the unfinished current day, weekends on weekday calendars, and non-positive prices."""
-    return [b for b in bars if b.date < today and b.close > 0 and (calendar == Calendar.CRYPTO or b.date.weekday() < 5)]
+    kept = {
+        b.date: b  # a repeated date keeps its last bar: providers do send duplicates
+        for b in bars
+        if b.date < today and b.close > 0 and (calendar == Calendar.CRYPTO or b.date.weekday() < 5)
+    }
+    return [kept[d] for d in sorted(kept)]
 
 
 def check_jumps(previous_close: Decimal | None, bars: list[Bar], max_change: float) -> None:
@@ -114,6 +120,20 @@ def fetch(asset: Asset, count: int) -> tuple[list[Bar], str]:
         return get_source(asset.fallback_source).daily_bars(asset.fallback_symbol, count), asset.fallback_source
 
 
+def fill_holes(asset: Asset, bars: list[Bar], calendar: str, today: date) -> int:
+    """Patch days missing from the main feed using the fallback source. Best effort: a failure here is not fatal."""
+    try:
+        extra = get_source(asset.fallback_source).daily_bars(asset.fallback_symbol, FULL_HISTORY)
+    except SourceError as exc:
+        log.warning("%s: could not fill holes: %s", asset.code, exc)
+        return 0
+    have = {b.date for b in bars}
+    holes = [
+        b for b in clean_bars(extra, calendar, today) if bars[0].date < b.date < bars[-1].date and b.date not in have
+    ]
+    return save_bars(asset, holes, asset.fallback_source)
+
+
 def update_asset(asset: Asset, full: bool = False) -> tuple[int, date | None, str]:
     """Bring one asset up to date. Returns (bars written, last date, source)."""
     if asset.source == Source.ADR:
@@ -127,6 +147,8 @@ def update_asset(asset: Asset, full: bool = False) -> tuple[int, date | None, st
 
     bars, used = fetch(asset, count)
     bars = clean_bars(bars, calendar, today)
+    if asset.main_from:
+        bars = [b for b in bars if b.date >= asset.main_from]
     if not bars:
         raise SourceError("no finished bars in the response")
 
@@ -137,10 +159,17 @@ def update_asset(asset: Asset, full: bool = False) -> tuple[int, date | None, st
         bars = apply_proxy(bars, asset.proxy)
 
     written = save_bars(asset, bars, used)
+    if full and asset.main_from:
+        PriceBar.objects.filter(asset=asset, date__lt=asset.main_from).delete()
     if full and asset.history_source:
         older = get_source(asset.history_source).daily_bars(asset.history_symbol, FULL_HISTORY)
         older = [b for b in clean_bars(older, calendar, today) if b.date < bars[0].date]
         written += save_bars(asset, older, asset.history_source)
+    if full and asset.fallback_source and used == asset.source:
+        written += fill_holes(asset, bars, calendar, today)
+
+    if (today - bars[-1].date).days > STALE_DAYS:
+        raise SourceError(f"feed looks dead: newest bar is {bars[-1].date}")
     return written, bars[-1].date, used
 
 

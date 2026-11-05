@@ -9,6 +9,7 @@ from apps.market.sources.base import SourceError
 from apps.market.sources.binance import BinanceSource
 from apps.market.sources.finnhub import FinnhubSource
 from apps.market.sources.fred import FredSource
+from apps.market.sources.kraken import KrakenSource
 from apps.market.sources.twelvedata import TwelveDataSource
 
 from .fakes import FakeResponse, FakeSession
@@ -136,6 +137,19 @@ def test_fred_error_message():
     with pytest.raises(SourceError) as exc:
         FredSource(KEY, FakeSession(FakeResponse(payload, 400)), pace=False).daily_bars("DHOILNYH", 10)
     assert KEY not in str(exc.value)
+
+
+def test_kraken_parses_rows():
+    row = [1793836800, "1.4", "1.5", "1.3", "1.45", "1.42", "1000.5", 3313]
+    payload = {"error": [], "result": {"TONUSD": [row], "last": 1793836800}}
+    bars = KrakenSource(session=FakeSession(FakeResponse(payload)), pace=False).daily_bars("TONUSD", 10)
+    assert bars[0].close == Decimal("1.45") and bars[0].volume == 1000.5
+
+
+def test_kraken_error():
+    payload = {"error": ["EQuery:Unknown asset pair"]}
+    with pytest.raises(SourceError):
+        KrakenSource(session=FakeSession(FakeResponse(payload)), pace=False).daily_bars("NOPE", 10)
 
 
 def test_finnhub_quote():

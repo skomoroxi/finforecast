@@ -21,6 +21,7 @@ LIMITS = {
     "twelvedata": Limit(interval=8.0, per_day=800),  # free plan: 8 a minute, 800 a day
     "alphavantage": Limit(interval=1.5, per_day=25),
     "binance": Limit(interval=0.3),
+    "kraken": Limit(interval=1.0),
     "fred": Limit(interval=0.6),  # 120 a minute
     "finnhub": Limit(interval=1.05),  # 60 a minute
 }

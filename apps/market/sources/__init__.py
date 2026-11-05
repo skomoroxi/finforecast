@@ -7,6 +7,7 @@ from .base import Bar, SourceError
 from .binance import BinanceSource
 from .finnhub import FinnhubSource
 from .fred import FredSource
+from .kraken import KrakenSource
 from .twelvedata import TwelveDataSource
 
 __all__ = ["Bar", "SourceError", "finnhub", "get_source"]
@@ -28,6 +29,8 @@ def get_source(name: str):
         return _keyed(FredSource, "FRED_API_KEY")
     if name == "binance":
         return BinanceSource()
+    if name == "kraken":
+        return KrakenSource()
     raise SourceError(f"unknown source {name!r}")
 
 

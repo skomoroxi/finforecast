@@ -14,6 +14,7 @@ class Source(models.TextChoices):
     BINANCE = "binance", "Binance"
     ALPHAVANTAGE = "alphavantage", "Alpha Vantage"
     FRED = "fred", "FRED"
+    KRAKEN = "kraken", "Kraken"
     ADR = "adr", "Calculated from ADR"
 
 
@@ -58,6 +59,9 @@ class Asset(models.Model):
         max_length=20, choices=Source.choices, blank=True, help_text="Older segment, e.g. FTM before it became Sonic."
     )
     history_symbol = models.CharField(max_length=30, blank=True)
+    main_from = models.DateField(
+        null=True, blank=True, help_text="Ignore the main source before this date, e.g. an unrelated older token."
+    )
     live_symbol = models.CharField(max_length=30, blank=True, help_text="Finnhub symbol for the live price.")
 
     series_of = models.ForeignKey(

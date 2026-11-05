@@ -4,6 +4,7 @@ from decimal import Decimal as D
 import pytest
 from django.core.management import call_command
 from django.db import connection
+from django.utils import timezone
 
 from apps.market import catalog, ratelimit, services
 from apps.market.models import AdrConversion, Asset, FetchResult, PriceBar
@@ -24,6 +25,13 @@ def test_clean_drops_today_weekends_and_bad_prices():
     ]
     assert [b.date for b in services.clean_bars(bars, "nyse", today)] == [date(2026, 11, 3)]
     assert len(services.clean_bars(bars, "crypto", today)) == 2
+
+
+def test_clean_keeps_one_bar_per_date_oldest_first():
+    day = date(2026, 11, 3)
+    bars = [bar(day, "1"), bar(date(2026, 11, 2)), bar(day, "2")]
+    cleaned = services.clean_bars(bars, "nyse", date(2026, 11, 5))
+    assert [(b.date.day, b.close) for b in cleaned] == [(2, D("100")), (3, D("2"))]
 
 
 def test_jump_check():
@@ -75,7 +83,7 @@ class FakeSource:
 
 
 def weekdays(count, end=None):
-    day = end or date(2026, 11, 4)
+    day = end or timezone.now().date() - timedelta(days=1)
     out = []
     while len(out) < count:
         if day.weekday() < 5:
@@ -134,6 +142,44 @@ def test_fallback_source_is_used(seeded, monkeypatch):
 
     monkeypatch.setattr(services, "get_source", source)
     assert services.update_asset(asset)[2] == "binance"
+
+
+def test_dead_feed_is_a_failure_but_keeps_its_data(seeded, monkeypatch):
+    asset = Asset.objects.get(code="HMSTR")
+    day = timezone.now().date() - timedelta(days=30)
+    monkeypatch.setattr(services, "get_source", lambda name: FakeSource([bar(day)]))
+    with pytest.raises(SourceError, match="feed looks dead"):
+        services.update_asset(asset)
+    assert PriceBar.objects.filter(asset=asset).count() == 1
+
+
+def test_full_load_fills_holes_from_the_fallback(seeded, monkeypatch):
+    asset = Asset.objects.get(code="LTC")
+    first, hole, last = (timezone.now().date() - timedelta(days=d) for d in (3, 2, 1))
+
+    def source(name):
+        if name == "twelvedata":
+            return FakeSource([bar(first), bar(last)])
+        return FakeSource([bar(first, "1"), bar(hole, "2"), bar(last, "3")])
+
+    monkeypatch.setattr(services, "get_source", source)
+    services.update_asset(asset, full=True)
+    stored = list(PriceBar.objects.filter(asset=asset).order_by("date").values_list("close", "source"))
+    assert stored == [(D("100"), "twelvedata"), (D("2"), "binance"), (D("100"), "twelvedata")]
+
+
+def test_main_source_is_ignored_before_main_from(seeded, monkeypatch):
+    asset = Asset.objects.get(code="S")
+    junk = asset.main_from - timedelta(days=30)
+    day = timezone.now().date() - timedelta(days=1)
+    services.save_bars(asset, [bar(junk, "0.0001")], "twelvedata")
+
+    def source(name):
+        return FakeSource([bar(junk, "0.0001"), bar(day)]) if name == "twelvedata" else FakeSource([bar(junk, "0.7")])
+
+    monkeypatch.setattr(services, "get_source", source)
+    services.update_asset(asset, full=True)
+    assert PriceBar.objects.get(asset=asset, date=junk).close == D("0.7")
 
 
 def test_sonic_history_is_joined_from_fantom(seeded, monkeypatch):

@@ -66,9 +66,9 @@
 | IOTA | IOTA | TD | 2017 |
 | Dash | DASH | TD | 2021 |
 | NEO | NEO | TD | 2017 |
-| Fantom → Sonic | S | TD (история FTM BN до 2025 + S) | 2022 |
-| EOS (Vaulta) | EOS | BN | 2022 |
-| Toncoin | TON | BN | 2024 |
+| Fantom → Sonic | S | TD c 14.01.2025 (раньше у TD другой токен) + история FTM BN | 2019 |
+| EOS (Vaulta) | EOS | BN: AUSDT (Vaulta) + история EOSUSDT | 2018 |
+| Toncoin | TON | Kraken (TONUSD); история BN до 30.06.2026 | 2024 |
 | Hamster Kombat | HMSTR | BN | 2024 |
 | Bonk | BONK | BN | 2024 |
 | Floki | FLOKI | BN | 2024 |
