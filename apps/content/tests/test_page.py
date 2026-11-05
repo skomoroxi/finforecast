@@ -215,6 +215,20 @@ def test_history_and_rollback(btc):
     assert Revision.objects.filter(asset=btc, field="h1").count() == 3
 
 
+def test_headings_do_not_repeat_the_code(seeded):
+    for code, heading in (("BMW", "2030"), ("WTI", "2030"), ("EURUSD", "2030"), ("SHIB", "(SHIB)")):
+        asset = Asset.objects.select_related("asset_class").get(code=code)
+        add_forecast(asset)
+        built = page.build_page(Asset.objects.select_related("asset_class").get(code=code))
+        assert built["h1"].endswith(heading)
+
+
+def test_seed_refresh_replaces_defaults_on_request(btc):
+    services.save_template(btc.asset_class, english(), "h1", "Edited")
+    call_command("seed_templates", "--refresh", verbosity=0)
+    assert Template.objects.get(asset_class=btc.asset_class, language=english(), field="h1").body != "Edited"
+
+
 def test_seed_keeps_admin_edits(btc):
     services.save_template(btc.asset_class, english(), "h1", "Edited")
     call_command("seed_templates", verbosity=0)

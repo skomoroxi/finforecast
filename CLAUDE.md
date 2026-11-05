@@ -12,7 +12,8 @@
 - Secrets only in `/opt/finforecast/.env` on the server and GitHub Secrets; never in the repo or logs.
 - Memory is tight (1.9 GB shared): keep Celery concurrency 1 and the compose memory limits.
 - Every page is `noindex` until `INDEXING=true` at launch.
-- Default template vs admin override rule for every page field: TECHNICAL-TASK §7.
+- Default template vs admin override rule for every page field: TECHNICAL-TASK §7. Template syntax: `apps/content/templating.py`.
+- `apps/content/defaults.py` only seeds the database; the admin owns templates after that.
 
 ## Commands
 - `.venv/Scripts/ruff check . && .venv/Scripts/ruff format --check .`

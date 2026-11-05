@@ -7,7 +7,7 @@ These only seed the database: after that the admin owns them.
 COMMON = {
     "title": "{name} {Noun} Prediction {year}–{last_year}: Daily Forecast",
     "meta_description": "{title_name} forecast: {price} today, {forecast_30d} in 30 days, monthly to {last_year} and yearly to {last_yearly}, updated daily.",
-    "h1": "{name} {Noun} Prediction & Forecast {year}–{last_year} ({code})",
+    "h1": "{name} {Noun} Prediction & Forecast {year}–{last_year}{code_suffix}",
     "h_summary": "{title_name} forecast at a glance",
     "h_chart": "{title_name} price chart and forecast",
     "h_next30": "{name} {noun} prediction for the next 30 days",
@@ -36,7 +36,7 @@ Everything on this page is recalculated every day after the market close, so the
 From today's close of {price}, the three models together point to {forecast_30d} in a month, {forecast_end_year} by the end of {year} and {forecast_2030} in December {last_year}. The daily technical summary reads {ta_daily}.""",
     "next30": """Over the next 30 days the consensus expects {subject} to {move_30d}, to about {forecast_30d} on {date_30d}.
 ~~
-By {date_30d}, the average of the three models puts {subject} at {forecast_30d}, so the price would {move_30d} from today.
+By {date_30d}, the average of the three models puts {subject} at {forecast_30d}, so the price would {move_30d}.
 
 The 80% range for that day is {low_30d} to {high_30d}: daily moves of a few percent are normal for {subject}, so treat single-day values as a guide to direction rather than exact prices.
 ~~
@@ -126,6 +126,7 @@ Regulation differs between countries and can change quickly.
 The coin produces no income, so returns depend entirely on the price.""",
     },
     "stock": {
+        "title": "{name} Stock Price Prediction {year}–{last_year}",
         "price_note": """?is_adr: This price is in euros and is close to the XETRA price. For most of its history it is estimated from the US-traded ADR ({adr_symbol}) and the EUR/USD rate; real XETRA closes are used for recent days where available.""",
         "drivers": """Earnings and guidance :: Quarterly results and what management expects next are usually the largest single driver of a share price.
 

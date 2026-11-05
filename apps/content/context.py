@@ -91,6 +91,13 @@ def title_name(asset: Asset) -> str:
     return f"{asset.name} ({asset.code})"
 
 
+def code_suffix(asset: Asset) -> str:
+    """(BTC) after a name, unless the name or the pair already says it."""
+    if asset.asset_class.code == "fx" or asset.code in asset.name:
+        return ""
+    return f" ({asset.code})"
+
+
 def capitalise(text: str) -> str:
     return text[:1].upper() + text[1:]
 
@@ -186,6 +193,7 @@ def build(asset: Asset, language: str = "en") -> Context:
         "name": asset.name,
         "code": asset.code,
         "title_name": title_name(asset),
+        "code_suffix": code_suffix(asset),
         "subject": subject,
         "Subject": capitalise(subject),
         "noun": noun,
@@ -305,6 +313,7 @@ VARIABLES = {
     "name",
     "code",
     "title_name",
+    "code_suffix",
     "subject",
     "Subject",
     "noun",
