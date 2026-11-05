@@ -18,4 +18,4 @@ docker compose up -d --remove-orphans web worker beat
 docker images finforecast --format '{{.Tag}} {{.ID}}' | grep -v '^latest ' | tail -n +4 | awk '{print $2}' | xargs -r docker rmi -f >/dev/null 2>&1 || true
 docker image prune -f >/dev/null
 
-docker compose ps --format 'table {{.Service}}\t{{.Status}}'
+docker compose ps   # compose 2.18 on this server: no Go-template --format
