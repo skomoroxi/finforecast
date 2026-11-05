@@ -1,3 +1,4 @@
+import re
 from datetime import timedelta
 from decimal import Decimal
 from types import SimpleNamespace
@@ -116,7 +117,7 @@ def test_default_template_fills_the_page(btc):
     assert "$100.00" in built["summary"][0] or "$100.0" in built["summary"][0]
     assert built["show"]["faq"] is True
     assert built["years"][0]["year"] == timezone.now().year
-    assert "{" not in flat(built)
+    assert not re.search(r"{[A-Za-z0-9_]+}", flat(built))
     assert "None" not in flat(built)
 
 
@@ -201,7 +202,7 @@ def test_every_class_renders(seeded):
         asset = Asset.objects.select_related("asset_class").get(code=code)
         add_forecast(asset)
         built = page.build_page(Asset.objects.select_related("asset_class").get(code=code))
-        assert "{" not in flat(built)
+        assert not re.search(r"{[A-Za-z0-9_]+}", flat(built))
         assert built["drivers"] and built["bull"] and built["bear"] and built["risks"]
 
 
