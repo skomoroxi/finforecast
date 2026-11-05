@@ -53,6 +53,11 @@ services:
     <<: *app
     command: ["celery", "-A", "finforecast", "worker", "--loglevel", "INFO", "--concurrency", "1"]
     mem_limit: 600m
+    # Forecasting is CPU heavy and this server also runs other live sites.
+    cpus: 1.0
+    environment:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
 
   beat:
     <<: *app

@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "apps.core",
     "apps.market",
+    "apps.forecasts",
 ]
 
 MIDDLEWARE = [
@@ -106,7 +107,11 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(hour=3, minute=15, day_of_week="tue-sat"),
         "args": ["energy"],
     },
+    # Forecasts cover whatever has a new close, so the second pass picks up energy.
+    "forecasts": {"task": "apps.forecasts.tasks.run_due_forecasts", "schedule": crontab(hour=1, minute=30)},
+    "forecasts-energy": {"task": "apps.forecasts.tasks.run_due_forecasts", "schedule": crontab(hour=3, minute=45)},
     "adr-ratios": {"task": "apps.market.tasks.recalc_ratios", "schedule": crontab(hour=4, minute=0)},
+    "accuracy": {"task": "apps.forecasts.tasks.update_accuracy", "schedule": crontab(hour=4, minute=30)},
     "live-quotes": {
         "task": "apps.market.tasks.refresh_live_quotes",
         "schedule": crontab(minute="*/3", hour="13-21", day_of_week="mon-fri"),
