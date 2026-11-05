@@ -54,10 +54,11 @@ Only port 8000 on 127.0.0.1 is published.
 Results are in the admin under Fetch runs. A failed asset keeps its old data and the run carries on.
 
 ## Known constraints
-- The server is short of memory. On 2026-11-04 and 2026-11-05 a burst of PHP requests (Apache allows 150 workers)
+- The server is short of memory. On 2026-11-04 and 2026-11-05 a burst of PHP requests (Apache then allowed 150 workers)
   used up RAM and swap and the kernel killed mysqld; systemd restarted it. The app's containers therefore carry a high
   `oom_score_adj`, so they go first. `mem_limit` caps RAM only: this kernel has no swap accounting (`swapaccount=1`
-  plus a reboot would add it).
+  plus a reboot would add it). Apache MaxRequestWorkers was lowered to 40 on 2026-11-05 in
+  `/etc/apache2/mods-available/mpm_prefork.conf`; the old file is in `/root/archive/`.
 - EIA's API refuses this server's Russian IP range (HTTP 403, with or without a key), so heating oil comes from
   FRED's API, series DHOILNYH, which republishes the same EIA data. FRED's CSV endpoint is not reachable from here.
 - Ubuntu 18.04 is past standard support; Docker is pinned at 24.0.2 (last release for 18.04). Plan an OS upgrade or a new VPS.
