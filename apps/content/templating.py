@@ -76,4 +76,4 @@ def _fill(text: str, values: dict) -> str | None:
     filled = VAR.sub(replace, text)
     if missing:
         return None
-    return re.sub(r"\s+([.,;:])", r"\1", re.sub(r"[ \t]+", " ", filled)).strip()
+    return re.sub(r"\s+([.,;])", r"\1", re.sub(r"[ \t]+", " ", filled)).strip()
