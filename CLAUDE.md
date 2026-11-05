@@ -7,6 +7,8 @@
   to port (TECHNICAL-TASK §4, §5.1).
 
 ## Rules
+- The current VPS is a development sandbox. Production moves to a non-Russian server when the site is built, so keep
+  everything portable. Never proxy around a geo-block. Claude API features run for real only after the move.
 - Secrets only in `/opt/finforecast/.env` on the server and GitHub Secrets; never in the repo or logs.
 - Memory is tight (1.9 GB shared): keep Celery concurrency 1 and the compose memory limits.
 - Every page is `noindex` until `INDEXING=true` at launch.
