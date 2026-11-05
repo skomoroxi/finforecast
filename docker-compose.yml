@@ -29,6 +29,7 @@ services:
       interval: 10s
       retries: 10
     mem_limit: 450m
+    oom_score_adj: 300
 
   redis:
     image: redis:7.4.9-alpine
@@ -48,12 +49,16 @@ services:
       interval: 30s
       retries: 3
     mem_limit: 300m
+    oom_score_adj: 500
 
   worker:
     <<: *app
     command: ["celery", "-A", "finforecast", "worker", "--loglevel", "INFO", "--concurrency", "1"]
     mem_limit: 600m
-    # Forecasting is CPU heavy and this server also runs other live sites.
+    # This server also runs live sites and mail. If memory runs out the kernel must pick this
+    # container, not MySQL, and PHP must win any fight for CPU. See docs/DEPLOY.md.
+    oom_score_adj: 800
+    cpu_shares: 256
     cpus: 1.0
     environment:
       OMP_NUM_THREADS: "1"
@@ -63,6 +68,7 @@ services:
     <<: *app
     command: ["celery", "-A", "finforecast", "beat", "--loglevel", "INFO", "--schedule", "/tmp/celerybeat-schedule"]
     mem_limit: 128m
+    oom_score_adj: 800
 
 volumes:
   pgdata:
