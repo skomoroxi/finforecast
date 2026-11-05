@@ -51,6 +51,7 @@ systemctl reload apache2
 install -d -o clauforecast -g clauforecast "$DOCROOT"
 cat > "$DOCROOT/.htaccess" <<'EOF'
 # FinForecast: everything goes to the Django app in Docker (deploy/server-setup.sh)
+DirectoryIndex disabled
 RewriteEngine On
 RequestHeader set X-Forwarded-Proto "https" env=HTTPS
 RewriteRule ^(.*)$ http://127.0.0.1:8000/$1 [P,L]
