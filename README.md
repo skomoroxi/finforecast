@@ -8,7 +8,7 @@ Specification: [docs/TECHNICAL-TASK.md](docs/TECHNICAL-TASK.md). Deployment: [do
 - [x] **M2: data.** 86 pages plus 16 supporting series, provider adapters with rate limits, daily jobs, German shares in euros from ADRs, fetch log.
 - [x] **M3: forecasts.** ARIMA, trend + mean reversion, Monte Carlo and consensus stored forever; technical analysis; live accuracy against real prices.
 - [x] **M4: content engine.** Field registry, class templates, manual values, substitutions, CSV, history and rollback, AI drafts with review.
-- [x] **M5: admin.** Page editor per asset and language, reviewers, custom blocks, analyst forecasts, job log with rerun, dashboard, two-factor login.
+- [x] **M5: admin.** Page editor per asset and language, reviewers, custom blocks, analyst forecasts, job log with rerun, dashboard.
 - [x] **M6: public site.** Asset pages, hubs, accuracy, comparisons, guides, blog, service pages, chart, live prices, page cache.
 - [ ] M7: en + de · M8: SEO · M9: legal · M10: launch
 

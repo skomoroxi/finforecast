@@ -26,8 +26,6 @@ SITE_URL = env("SITE_URL")
 INDEXING = env("INDEXING")
 # The admin lives on a non-guessable path set per environment.
 ADMIN_URL = env("ADMIN_URL")
-ADMIN_2FA = env.bool("ADMIN_2FA", default=True)
-OTP_TOTP_ISSUER = "FinForecast"
 
 INSTALLED_APPS = [
     "unfold",
@@ -37,9 +35,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django_otp",
-    "django_otp.plugins.otp_totp",
-    "django_otp.plugins.otp_static",
     "apps.core",
     "apps.market",
     "apps.forecasts",
@@ -54,8 +49,6 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django_otp.middleware.OTPMiddleware",
-    "apps.core.two_factor.RequireTwoFactor",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]

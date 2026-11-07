@@ -42,14 +42,12 @@ Only port 8000 on 127.0.0.1 is published.
 
 ## Admin login
 
-Staff sign in with a password and then a code from an authenticator app; the first login shows the QR code and 8
-recovery codes. If a phone is lost, use a recovery code. If those are gone too, on the server:
+Staff sign in with a username and password at the secret admin path (`ADMIN_URL` in `.env`). There is no second
+factor (removed at the owner's request on 2026-11-07), so use a long, unique password. To set a new one:
 
 ```bash
-docker exec finforecast-web-1 python manage.py addstatictoken <username>
+docker exec -it finforecast-web-1 python manage.py changepassword <username>
 ```
-
-That prints a one-time code. After signing in with it, delete the old device under OTP TOTP devices and set up again.
 
 ## Daily data jobs (UTC)
 

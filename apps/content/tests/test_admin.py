@@ -1,6 +1,5 @@
-"""The editor, reviewers, blocks, analysts, job log and two-factor login."""
+"""The editor, reviewers, blocks, analysts and job log."""
 
-import base64
 from datetime import date
 
 import pytest
@@ -8,9 +7,6 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.urls import reverse
-from django_otp.oath import totp
-from django_otp.plugins.otp_static.models import StaticDevice
-from django_otp.plugins.otp_totp.models import TOTPDevice
 
 from apps.content import csvio, page, services
 from apps.content.models import AnalystTarget, CustomBlock, Draft, Language, Override, Reviewer
@@ -192,72 +188,8 @@ def test_dashboard_shows_what_needs_attention(staff, btc):
     assert "feed down" in html and "failures in 24 hours" in html
 
 
-@pytest.fixture
-def two_factor(settings):
-    settings.ADMIN_2FA = True
-
-
-def code_for(device):
-    return f"{totp(device.bin_key):06d}"
-
-
-def test_staff_without_a_device_are_sent_to_setup(staff, two_factor):
-    response = staff.get(reverse("admin:index"))
-    assert response.status_code == 302 and response.url == reverse("two_factor_setup")
-
-
-def test_qr_and_manual_key_work_in_authenticator_apps(staff, two_factor):
-    html = staff.get(reverse("two_factor_setup")).content.decode()
-    device = TOTPDevice.objects.get()
-    assert "issuer=FinForecast" in device.config_url
-    assert base64.b32encode(device.bin_key).decode() in html
-
-
-def test_wrong_code_does_not_finish_setup(staff, two_factor):
-    staff.get(reverse("two_factor_setup"))
-    response = staff.post(reverse("two_factor_setup"), {"token": "000000"})
-    assert b"did not match" in response.content
-    assert not TOTPDevice.objects.filter(confirmed=True).exists()
-
-
-def test_setup_gives_recovery_codes_and_opens_the_admin(staff, two_factor):
-    assert b"<svg" in staff.get(reverse("two_factor_setup")).content
-    device = TOTPDevice.objects.get()
-    response = staff.post(reverse("two_factor_setup"), {"token": code_for(device)})
-    assert len(response.context["codes"]) == 8
-    assert StaticDevice.objects.get().token_set.count() == 8
-    assert staff.get(reverse("admin:index")).status_code == 200
-
-
-def test_a_new_session_must_verify(client, btc, two_factor):
+def test_admin_opens_with_a_password_alone(client, db):
     user = get_user_model().objects.create_superuser("root", "r@example.com", "a-long-test-password")
-    device = TOTPDevice.objects.create(user=user, name="a", confirmed=True)
-    client.force_login(user)
-    assert client.get(reverse("admin:index")).url == reverse("two_factor_verify")
-    assert b"did not match" in client.post(reverse("two_factor_verify"), {"token": "000000"}).content
-    device.refresh_from_db()
-    device.throttle_reset()
-    assert client.post(reverse("two_factor_verify"), {"token": code_for(device)}).status_code == 302
+    assert client.login(username="root", password="a-long-test-password")
     assert client.get(reverse("admin:index")).status_code == 200
-
-
-def test_recovery_code_works_once(client, btc, two_factor):
-    user = get_user_model().objects.create_superuser("root", "r@example.com", "a-long-test-password")
-    TOTPDevice.objects.create(user=user, name="a", confirmed=True)
-    static = StaticDevice.objects.create(user=user, name="recovery")
-    static.token_set.create(token="abc123")
-    client.force_login(user)
-    assert client.post(reverse("two_factor_verify"), {"token": "abc123"}).status_code == 302
-    assert not static.token_set.exists()
-
-
-def test_dashboard_counts_assets_without_prices(staff):
-    assert "assets with old or no prices" in staff.get(reverse("admin:index")).content.decode()
-
-
-def test_public_pages_are_not_affected(client, db, two_factor):
-    assert client.get(reverse("home")).status_code == 200
-
-
-def test_login_page_stays_open(client, db, two_factor):
-    assert client.get(reverse("admin:login")).status_code == 200
+    assert user.is_staff
