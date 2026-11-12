@@ -15,6 +15,7 @@ from . import formatting as fmt
 
 MONTHLY_LAST_YEAR = 2030
 YEARLY_LAST_YEAR = 2035
+ATH_TOLERANCE = 0.005  # within half a percent of the record counts as at the record
 TREND_GAP_SHOWN = 10.0  # percent away from trend before the text mentions it
 
 VERDICTS = {
@@ -155,6 +156,10 @@ def build(asset: Asset, language: str = "en") -> Context:
     goal = milestone(today)
 
     bars = list(PriceBar.objects.filter(asset=asset).order_by("-date").values_list("close", flat=True)[:2])
+    record = PriceBar.objects.filter(asset=asset).order_by("-close", "date").values_list("date", "close").first()
+    intraday = PriceBar.objects.filter(asset=asset).exclude(high=None).order_by("-high").values_list("high", flat=True)
+    ath = float(record[1]) if record else None
+    ath_intraday = float(intraday.first()) if intraday.exists() else None
     change_1d = float(bars[0]) / float(bars[1]) - 1 if len(bars) == 2 else None
 
     technicals = getattr(asset, "technicals", None)
@@ -224,6 +229,10 @@ def build(asset: Asset, language: str = "en") -> Context:
         "p10_2030": money(p10_2030),
         "p90_2030": money(p90_2030),
         "goal": fmt.money_round(goal, asset.currency, language, is_rate),
+        "ath": money(ath),
+        "ath_date": fmt.long_date(record[0], language) if record else None,
+        "ath_gap": pct(1 - today / ath) if ath and today < ath else None,
+        "ath_intraday": money(ath_intraday),
         "long_first_year": first_long.target.year if first_long else None,
         "long_last_year": last_long.target.year if last_long else None,
         "long_first": money(first_long.value if first_long else None),
@@ -266,6 +275,8 @@ def build(asset: Asset, language: str = "en") -> Context:
         "goal_central": central >= goal,
         "goal_possible": central < goal <= upper,
         "goal_unlikely": upper < goal,
+        "below_ath": bool(ath) and today < ath * (1 - ATH_TOLERANCE),
+        "consensus_2030_above_ath": bool(ath and december_2030) and december_2030.value > ath,
         "is_adr": adr is not None,
         "is_index_etf": asset.asset_class.code == "etf_index",
         "close_only": bool(technicals and technicals.ohlc_basis == "close"),
@@ -345,6 +356,10 @@ VARIABLES = {
     "p10_2030",
     "p90_2030",
     "goal",
+    "ath",
+    "ath_date",
+    "ath_gap",
+    "ath_intraday",
     "long_first_year",
     "long_last_year",
     "long_first",
@@ -392,6 +407,8 @@ FLAGS = {
     "goal_central",
     "goal_possible",
     "goal_unlikely",
+    "below_ath",
+    "consensus_2030_above_ath",
     "is_adr",
     "is_index_etf",
     "close_only",

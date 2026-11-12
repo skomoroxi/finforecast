@@ -172,6 +172,28 @@ def test_faq_shows_one_answer_for_the_goal_question(btc):
     assert len(goal) == 1
 
 
+def test_record_price_variables(btc):
+    from apps.content.context import build
+
+    PriceBar.objects.create(
+        asset=btc, date="2025-10-06", close=Decimal("124658.54"), high=Decimal("126199.63"), avg=1, source="twelvedata"
+    )
+    context = build(btc)
+    assert context.values["ath"] == "$124,659"
+    assert context.values["ath_date"] == "October 6, 2025"
+    assert context.values["ath_gap"] == "99.92%"  # fixture price is 100
+    assert context.values["ath_intraday"] == "$126,200"
+    assert context.flags["below_ath"] is True
+
+
+def test_at_the_record_there_is_no_gap(btc):
+    from apps.content.context import build
+
+    context = build(btc)  # the fixture's last close is its highest
+    assert context.values["ath_gap"] is None
+    assert context.flags["below_ath"] is False
+
+
 def test_trend_sentence_follows_the_data(btc):
     assert any("above its long-run trend" in p for p in page.build_page(btc)["outlook"])
 
