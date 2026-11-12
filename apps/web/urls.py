@@ -26,5 +26,12 @@ urlpatterns = [
     path("contact/", views.static_page, {"slug": "contact"}, name="contact"),
     path("disclaimer/", views.static_page, {"slug": "disclaimer"}, name="disclaimer"),
     path("privacy/", views.static_page, {"slug": "privacy"}, name="privacy"),
+    # Frozen copies for before/after comparison (apps/web/archive.py); before the asset catch-all.
+    path(
+        "bitcoin-price-prediction-old/",
+        views.archived_page,
+        {"slug": "bitcoin-price-prediction-old"},
+        name="archive_bitcoin",
+    ),
     path("<slug:slug>/", views.asset_page, name="asset"),
 ]

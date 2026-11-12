@@ -10,7 +10,7 @@ from apps.content.context import NoForecast
 from apps.content.models import Comparison, Page, Reviewer
 from apps.market.models import Asset
 
-from . import data
+from . import archive, data
 from .caching import cached_page, version
 
 CHART_SECONDS = 6 * 3600
@@ -183,3 +183,12 @@ def robots(request):
     else:
         body = "# Pre-launch: nothing is indexed yet.\nUser-agent: *\nDisallow: /\n"
     return HttpResponse(body, content_type="text/plain")
+
+
+def archived_page(request, slug):
+    """A frozen copy of a page from before a content change (apps/web/archive.py); never indexed."""
+    if slug not in archive.PAGES:
+        raise Http404
+    response = HttpResponse(archive.html(slug))
+    response["X-Robots-Tag"] = "noindex, nofollow"
+    return response
