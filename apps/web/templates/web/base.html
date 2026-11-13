@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- Google Tag Manager -->
-  <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-P2ZGFMR3"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-  </script>
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-P2ZGFMR3');</script>
+  <!-- End Google Tag Manager -->
   <title>{{ meta_title|default:"FinForecast" }}</title>
   {% if meta_description %}<meta name="description" content="{{ meta_description }}">{% endif %}
   <link rel="canonical" href="{{ SITE_URL }}{{ request.path }}">
@@ -21,6 +21,10 @@
   {% block head %}{% endblock %}
 </head>
 <body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P2ZGFMR3"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
   <a class="skip-link" href="#main">{% translate "Skip to content" %}</a>
   {% include "web/_ticker.html" %}
   {% include "web/_nav.html" %}
