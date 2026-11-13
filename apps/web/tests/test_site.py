@@ -214,11 +214,6 @@ def test_guides_and_blog(client, seeded):
     assert client.get(reverse("post", args=["draft"])).status_code == 404
 
 
-def test_robots_blocks_admin_after_launch(client, db, settings):
-    settings.INDEXING = True
-    assert f"Disallow: /{settings.ADMIN_URL}" in client.get("/robots.txt").content.decode()
-
-
 def test_sparkline_and_direction():
     assert data.sparkline([1.0]) == {}
     assert data.sparkline([1.0, 2.0])["trend"] == "up"
@@ -284,3 +279,28 @@ def test_faq_schema_cannot_break_out_of_the_script_tag():
 
 def test_no_faq_schema_when_the_faq_is_hidden():
     assert data.faq_schema({"show": {"faq": False}, "faq": [{"title": "q", "text": "a"}]}) == ""
+
+
+def test_sitemap_lists_public_pages_only(client, btc):
+    response = client.get("/forecast-sitemap.xml")
+    assert response.status_code == 200
+    assert response["Content-Type"].startswith("application/xml")
+    body = response.content.decode()
+    assert (
+        "<loc>https://price-predictions.net/</loc>"
+        in body.replace("http://testserver", "https://price-predictions.net")
+        or "/</loc>" in body
+    )
+    assert "/bitcoin-price-prediction/</loc>" in body
+    assert "/crypto/</loc>" in body
+    assert "/accuracy/</loc>" in body
+    assert "-old/" not in body and "/api/" not in body and "manage-" not in body
+    assert "<lastmod>" in body
+
+
+def test_robots_when_indexing_names_no_sitemap_or_admin(client, settings):
+    settings.INDEXING = True
+    body = client.get("/robots.txt").content.decode()
+    assert "Allow: /" in body
+    assert "Sitemap" not in body
+    assert settings.ADMIN_URL.strip("/") not in body

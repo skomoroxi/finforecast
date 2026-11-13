@@ -10,7 +10,7 @@ from apps.content.context import NoForecast
 from apps.content.models import Comparison, Page, Reviewer
 from apps.market.models import Asset
 
-from . import archive, data
+from . import archive, data, sitemap
 from .caching import cached_page, version
 
 CHART_SECONDS = 6 * 3600
@@ -175,14 +175,24 @@ def live_quotes(request):
 
 
 def robots(request):
+    # The sitemap (/forecast-sitemap.xml) is submitted to search engines directly, not announced here (owner's
+    # choice). The admin path is not listed either: robots.txt is public and would reveal it; the admin is noindex.
     if settings.INDEXING:
-        body = (
-            f"User-agent: *\nAllow: /\nDisallow: /{settings.ADMIN_URL}\nDisallow: /api/\n\n"
-            f"Sitemap: {settings.SITE_URL}/sitemap.xml\n"
-        )
+        body = "User-agent: *\nAllow: /\nDisallow: /api/\n"
     else:
         body = "# Pre-launch: nothing is indexed yet.\nUser-agent: *\nDisallow: /\n"
     return HttpResponse(body, content_type="text/plain")
+
+
+def sitemap_xml(request):
+    key = f"web:sitemap:{version()}"
+    body = cache.get(key)
+    if body is None:
+        body = sitemap.xml()
+        cache.set(key, body, CHART_SECONDS)
+    response = HttpResponse(body, content_type="application/xml; charset=utf-8")
+    response["Cache-Control"] = "public, max-age=3600"
+    return response
 
 
 def archived_page(request, slug):

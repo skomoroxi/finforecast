@@ -21,6 +21,7 @@ urlpatterns = [
     path("authors/<slug:slug>/", views.author, name="author"),
     path("api/chart/<str:code>.json", views.chart_json, name="chart_json"),
     path("api/live/", views.live_quotes, name="live_quotes"),
+    path("forecast-sitemap.xml", views.sitemap_xml, name="sitemap"),
     path("methodology/", views.static_page, {"slug": "methodology"}, name="methodology"),
     path("about/", views.static_page, {"slug": "about"}, name="about"),
     path("contact/", views.static_page, {"slug": "contact"}, name="contact"),

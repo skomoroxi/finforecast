@@ -26,7 +26,7 @@ def test_robots_closed_until_indexing(client, settings):
     assert "Disallow: /" in client.get("/robots.txt").content.decode()
     settings.INDEXING = True
     body = client.get("/robots.txt").content.decode()
-    assert "Allow: /" in body and "Sitemap:" in body
+    assert "Allow: /" in body and "Sitemap:" not in body
 
 
 def test_heartbeat_writes_cache(settings):
