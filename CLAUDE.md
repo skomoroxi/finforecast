@@ -11,7 +11,8 @@
   geo-block.
 - Secrets only in `/opt/finforecast/.env` on the server and GitHub Secrets; never in the repo or logs.
 - 4 GB RAM, dedicated: keep Celery concurrency 1 and the compose memory limits.
-- Every page is `noindex` until `INDEXING=true` at launch.
+- Indexing is on since 2026-11-14 (`INDEXING=true` in `.env`). Sitemap: `/forecast-sitemap.xml`, submitted to search engines
+  directly; by the owner's choice robots.txt does not mention it. Archive copies (`apps/web/archive.py`) stay noindex.
 - Default template vs admin override rule for every page field: TECHNICAL-TASK §7. Template syntax: `apps/content/templating.py`.
 - `apps/content/defaults.py` only seeds the database; the admin owns templates after that.
 
