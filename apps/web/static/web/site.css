@@ -585,6 +585,12 @@ a:visited {
     cursor: pointer;
     list-style: none;
   }
+  .faq__q {
+    margin: 0;
+    font: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+  }
   summary::-webkit-details-marker {
     display: none;
   }

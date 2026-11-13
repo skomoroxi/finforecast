@@ -246,3 +246,41 @@ def test_history_rows_are_newest_first():
 def test_text_cannot_inject_html(client, btc):
     services.save_override(btc, Language.objects.get(code="en"), "h1", "<script>x</script>")
     assert "<script>x</script>" not in client.get("/bitcoin-price-prediction/").content.decode()
+
+
+def test_crypto_headings_follow_the_crypto_template(client, btc):
+    html = client.get("/bitcoin-price-prediction/").content.decode()
+    for heading in (
+        "Bitcoin forecast at a glance</h2>",
+        "Short term Bitcoin daily price prediction</h2>",
+        "BTC forecast for tomorrow and next week</h3>",
+        "Bitcoin 5 year forecast</h2>",
+        "Long term Bitcoin forecast for the next 10 years</h2>",
+        "BTC technical analysis</h2>",
+        "Bitcoin FAQ</h2>",
+    ):
+        assert heading in html, heading
+
+
+def test_faq_questions_are_h3_and_match_the_schema(client, btc):
+    import json
+    import re
+
+    html = client.get("/bitcoin-price-prediction/").content.decode()
+    questions = re.findall(r'<h3 class="faq__q">(.*?)</h3>', html)
+    assert questions
+    block = re.search(r'<script type="application/ld\+json">(.*?)</script>', html, re.S)
+    schema = json.loads(block.group(1))
+    assert schema["@type"] == "FAQPage"
+    assert len(schema["mainEntity"]) == len(questions)
+    assert all(q["acceptedAnswer"]["text"] for q in schema["mainEntity"])
+
+
+def test_faq_schema_cannot_break_out_of_the_script_tag():
+    page = {"show": {"faq": True}, "faq": [{"title": "</script><b>", "text": "a & b"}]}
+    text = data.faq_schema(page)
+    assert "<" not in text and "&" not in text
+
+
+def test_no_faq_schema_when_the_faq_is_hidden():
+    assert data.faq_schema({"show": {"faq": False}, "faq": [{"title": "q", "text": "a"}]}) == ""

@@ -141,7 +141,7 @@ def test_manual_value_wins_and_uses_variables(btc):
 def test_reset_returns_to_the_template(btc):
     override = services.save_override(btc, english(), "h1", "Mine")
     services.reset_override(override)
-    assert page.build_page(btc)["h1"].endswith("(BTC)")
+    assert page.build_page(btc)["h1"].endswith("(BTC Forecast)")
     assert Revision.objects.filter(field="h1", removed=True, value="Mine").exists()
 
 
@@ -240,7 +240,7 @@ def test_history_and_rollback(btc):
 
 
 def test_headings_do_not_repeat_the_code(seeded):
-    for code, heading in (("BMW", "2030"), ("WTI", "2030"), ("EURUSD", "2030"), ("SHIB", "(SHIB)")):
+    for code, heading in (("BMW", "2030"), ("WTI", "2030"), ("EURUSD", "2030"), ("SHIB", "(SHIB Forecast)")):
         asset = Asset.objects.select_related("asset_class").get(code=code)
         add_forecast(asset)
         built = page.build_page(Asset.objects.select_related("asset_class").get(code=code))

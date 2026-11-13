@@ -1,5 +1,6 @@
 """Turns stored prices, forecasts and technicals into what the templates show."""
 
+import json
 import math
 from dataclasses import dataclass
 from datetime import timedelta
@@ -636,6 +637,23 @@ def analyst_table(asset, numbers, entries) -> dict | None:
     return table(_("Published %(name)s price targets") % {"name": asset.name}, columns, rows)
 
 
+def faq_schema(page) -> str:
+    """schema.org FAQPage as JSON-LD, built from the FAQ shown on the page (empty if the section is hidden)."""
+    if not page["show"].get("faq") or not page["faq"]:
+        return ""
+    data = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {"@type": "Question", "name": item["title"], "acceptedAnswer": {"@type": "Answer", "text": item["text"]}}
+            for item in page["faq"]
+        ],
+    }
+    # Safe inside <script>: no "<", ">" or "&" can close the tag.
+    text = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
+    return text.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+
+
 def asset_page(asset, language="en") -> dict:
     page = build_page(asset, language)
     numbers = Numbers(asset, language)
@@ -736,6 +754,7 @@ def asset_page(asset, language="en") -> dict:
     return {
         "asset": asset,
         "page": page,
+        "faq_schema": faq_schema(page),
         "stale": age > STALE_AFTER_DAYS,
         "data_date": fmt.long_date(run.data_date, language),
         "updated": fmt.long_date(run.run_date, language),

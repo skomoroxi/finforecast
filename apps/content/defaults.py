@@ -96,8 +96,28 @@ Is {subject} a buy or sell right now? :: The daily technical summary currently r
 How accurate are these {subject} predictions? :: On average, {accuracy_basis}, the consensus missed the actual price by {mape_1d}% one day ahead, {mape_7d}% one week ahead and {mape_30d}% 30 days ahead. Errors grow quickly with the horizon.""",
 }
 
+CRYPTO_HEADINGS = {
+    "h1": "{name} Price Prediction {year}–{last_year} ({code} Forecast)",
+    "h_summary": "{name} forecast at a glance",
+    "h_chart": "{name} price chart and forecast",
+    "h_next30": "Short term {name} daily price prediction",
+    "h_tomorrow": "{code} forecast for tomorrow and next week",
+    "h_this_year": "{name} price prediction {year}",
+    "h_five_years": "{name} 5 year forecast",
+    "h_year": "{name} price prediction {this_year}",
+    "h_outlook": "Long term {name} forecast for the next 10 years",
+    "h_ta": "{code} technical analysis",
+    "h_analysts": "{name} price target by analysts",
+    "h_drivers": "What will drive {name} prices",
+    "h_history": "{name} price history, past cycles and the all-time high of {code}",
+    "h_investment": "Is {name} a good investment in {year}? Volatility, risks and timing",
+    "h_accuracy": "How we forecast {name} and how accurate we are",
+    "h_faq": "{name} FAQ",
+}
+
 CLASSES = {
     "crypto": {
+        **CRYPTO_HEADINGS,
         "drivers": """Market sentiment :: Crypto prices react strongly to the mood of the market, and most coins tend to move together with Bitcoin.
 
 Adoption and use :: Real use of a network, and the number of people and projects building on it, supports demand over time.
