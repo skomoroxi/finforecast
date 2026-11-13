@@ -304,3 +304,10 @@ def test_robots_when_indexing_names_no_sitemap_or_admin(client, settings):
     assert "Allow: /" in body
     assert "Sitemap" not in body
     assert settings.ADMIN_URL.strip("/") not in body
+
+
+def test_google_tag_manager_is_in_the_head(client, btc):
+    for url in ("/", "/bitcoin-price-prediction/", "/accuracy/", "/no-such-page/"):
+        html = client.get(url).content.decode()
+        head = html.split("</head>", 1)[0]
+        assert "googletagmanager.com/gtm.js?id=GTM-P2ZGFMR3" in head, url
