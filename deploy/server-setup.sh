@@ -36,6 +36,10 @@ install -d -m 750 -o deploy -g deploy "$APP"
 # 3. Caddy: HTTPS with an automatic Let's Encrypt certificate, www -> bare domain, proxy to the app.
 #    The certificate is issued once DNS points here; until then Caddy retries on its own.
 cat > /etc/caddy/Caddyfile <<EOF
+{
+	cert_issuer acme   # Let's Encrypt only; ZeroSSL would need an account email
+}
+
 www.$DOMAIN {
 	redir https://$DOMAIN{uri} permanent
 }
