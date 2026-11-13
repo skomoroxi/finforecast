@@ -1,14 +1,31 @@
 #!/usr/bin/env bash
-# One-time server setup for FinForecast on the ISPmanager VPS. Run as root:
-#   ssh root@91.210.170.44 'bash -s' < deploy/server-setup.sh
-# Idempotent: safe to run again. Does not touch other sites, mail or ISPmanager settings.
+# One-time setup of a plain Ubuntu VPS (Hostman, 2 vCPU / 4 GB) for FinForecast. Run as root:
+#   ssh root@SERVER 'bash -s' < deploy/server-setup.sh
+# Idempotent: safe to run again. Packages come from the Ubuntu archive only.
+# The .env is not created here: copy the existing one (docs/DEPLOY.md, "Moving the site").
 set -euo pipefail
 
 DEPLOY_PUBKEY='ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAZlw+QpL/eOeAqrAiPJWrFbzEoiTQ4BZwzlP8H/w3Up github-actions deploy skomoroxi/finforecast'
 APP=/opt/finforecast
-DOCROOT=/var/www/clauforecast/data/www/forecast/public   # ISPmanager docroot of price-predictions.net
+DOMAIN=price-predictions.net
+HOSTMAN_MONITORING="92.53.116.12 92.53.116.111 92.53.116.119"   # Zabbix servers in the agent config
 
-# 1. "deploy" user for GitHub Actions: may run docker, owns the app folder, nothing else.
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -qq
+apt-get install -y -qq docker.io docker-compose-v2 caddy ufw unattended-upgrades >/dev/null
+systemctl enable --now docker
+
+# 1. Firewall: SSH and web only (+ the hosting provider's monitoring agent).
+#    The app listens on 127.0.0.1:8000, so Docker's own iptables rules expose nothing.
+ufw default deny incoming >/dev/null
+ufw default allow outgoing >/dev/null
+ufw allow 22/tcp >/dev/null
+ufw allow 80/tcp >/dev/null
+ufw allow 443/tcp >/dev/null
+for ip in $HOSTMAN_MONITORING; do ufw allow from "$ip" to any port 10050 proto tcp >/dev/null; done
+ufw --force enable >/dev/null
+
+# 2. "deploy" user for GitHub Actions: may run docker, owns the app folder, nothing else.
 id deploy >/dev/null 2>&1 || useradd --create-home --shell /bin/bash deploy
 usermod -aG docker deploy
 install -d -m 700 -o deploy -g deploy /home/deploy/.ssh
@@ -16,48 +33,26 @@ echo "$DEPLOY_PUBKEY" > /home/deploy/.ssh/authorized_keys
 chown deploy:deploy /home/deploy/.ssh/authorized_keys && chmod 600 /home/deploy/.ssh/authorized_keys
 install -d -m 750 -o deploy -g deploy "$APP"
 
-# 2. Production .env with random secrets, created once, never printed.
-ENV="$APP/.env"
-if [ ! -f "$ENV" ]; then
-  PW=$(openssl rand -hex 24)
-  SK=$(openssl rand -base64 64 | tr -d '\n/+=' | cut -c1-64)
-  AP=$(openssl rand -hex 6)
-  cat > "$ENV" <<EOF
-DEBUG=false
-DJANGO_SECRET_KEY=$SK
-ALLOWED_HOSTS=price-predictions.net,www.price-predictions.net,127.0.0.1,localhost
-CSRF_TRUSTED_ORIGINS=https://price-predictions.net,https://www.price-predictions.net
-SITE_URL=https://price-predictions.net
-INDEXING=false
-ADMIN_URL=manage-$AP/
-POSTGRES_DB=finforecast
-POSTGRES_USER=finforecast
-POSTGRES_PASSWORD=$PW
-DATABASE_URL=postgres://finforecast:$PW@db:5432/finforecast
-REDIS_URL=redis://redis:6379/0
-TWELVEDATA_API_KEY=
-ALPHAVANTAGE_API_KEY=
-FRED_API_KEY=
-ANTHROPIC_API_KEY=
-FINNHUB_API_KEY=
-EOF
-  chown deploy:deploy "$ENV" && chmod 600 "$ENV"
-fi
+# 3. Caddy: HTTPS with an automatic Let's Encrypt certificate, www -> bare domain, proxy to the app.
+#    The certificate is issued once DNS points here; until then Caddy retries on its own.
+cat > /etc/caddy/Caddyfile <<EOF
+www.$DOMAIN {
+	redir https://$DOMAIN{uri} permanent
+}
 
-# 3. Apache (ISPmanager) forwards price-predictions.net to the app on 127.0.0.1:8000.
-#    Done with .htaccess in the domain's docroot so ISPmanager regenerating the vhost cannot undo it.
-a2enmod -q proxy proxy_http headers rewrite
-apache2ctl configtest
-systemctl reload apache2
-install -d -o clauforecast -g clauforecast "$DOCROOT"
-cat > "$DOCROOT/.htaccess" <<'EOF'
-# FinForecast: everything goes to the Django app in Docker (deploy/server-setup.sh)
-DirectoryIndex disabled
-RewriteEngine On
-RequestHeader set X-Forwarded-Proto "https" env=HTTPS
-RewriteRule ^(.*)$ http://127.0.0.1:8000/$1 [P,L]
+$DOMAIN {
+	encode gzip
+	reverse_proxy 127.0.0.1:8000
+	log {
+		output file /var/log/caddy/access.log {
+			roll_size 20MiB
+			roll_keep 5
+		}
+	}
+}
 EOF
-chown clauforecast:clauforecast "$DOCROOT/.htaccess"
+caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null
+systemctl enable caddy >/dev/null
+systemctl reload-or-restart caddy
 
 echo "Server setup done."
-echo "Admin path: $(grep ^ADMIN_URL "$ENV" | cut -d= -f2)"

@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 20
     env:
       SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
-      HOST: ${{ vars.DEPLOY_HOST || '91.210.170.44' }}
+      HOST: ${{ vars.DEPLOY_HOST || '212.192.2.86' }}
       USER: deploy
     steps:
       - name: Check deploy key
@@ -54,7 +54,7 @@ jobs:
       - name: Release
         run: ssh $USER@$HOST "IMAGE_TAG=$SHA bash /opt/finforecast/remote-deploy.sh"
 
-      - name: Health check through Apache
+      - name: Health check through Caddy
         run: |
           for i in $(seq 1 10); do
             if curl -fsS --max-time 10 https://price-predictions.net/healthz; then echo; exit 0; fi

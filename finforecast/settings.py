@@ -151,7 +151,7 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Behind Apache (ISPmanager) and later Cloudflare: trust the forwarded host and scheme.
+# Behind Caddy (and possibly Cloudflare later): trust the forwarded host and scheme.
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 if not DEBUG:
