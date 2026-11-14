@@ -146,6 +146,7 @@ def test_analysts_show_only_with_entries(client, btc):
     )
     html = client.get("/bitcoin-price-prediction/").content.decode()
     assert 'id="analysts"' in html and "Example Bank" in html and "https://example.com/o" in html
+    assert "End of period" in html and "Horizon&lt;" not in html
 
 
 def test_home_and_hubs(client, btc):

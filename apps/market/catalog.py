@@ -90,7 +90,7 @@ STOCKS_ASIA_ADR = [
 STOCKS_GERMAN = [
     ("BMW", "BMW", "BMWKY", "BMW.DEX"),
     ("BAS", "BASF", "BASFY", "BAS.DEX"),
-    ("ADS", "adidas", "ADDYY", "ADS.DEX"),
+    ("ADS", "Adidas", "ADDYY", "ADS.DEX"),
     ("P911", "Porsche AG", "DRPRY", "P911.DEX"),
     ("MBG", "Mercedes-Benz", "MBGYY", "MBG.DEX"),
     ("VOW3", "Volkswagen", "VWAGY", "VOW3.DEX"),

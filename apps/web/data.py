@@ -12,6 +12,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from apps.content import formatting as fmt
+from apps.content.models import AnalystTarget
 from apps.content.page import build_page
 from apps.forecasts.display import for_display, recent_matured
 from apps.forecasts.models import ForecastAccuracy, ForecastPoint, ForecastRun
@@ -629,11 +630,11 @@ def analyst_table(asset, numbers, entries) -> dict | None:
                 e["institution"],
                 e["horizon"],
                 cell(target, strong=True),
-                e["basis"],
+                AnalystTarget.Basis(e["basis"]).label,
                 fmt.short_date(e["published_on"], numbers.language),
             ]
         )
-    columns = [_("Institution"), _("Horizon<"), _("Target"), _("Basis"), _("Published")]
+    columns = [_("Institution"), _("Horizon"), _("Target"), _("Basis"), _("Published")]
     return table(_("Published %(name)s price targets") % {"name": asset.name}, columns, rows)
 
 
