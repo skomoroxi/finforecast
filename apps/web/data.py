@@ -631,11 +631,21 @@ def analyst_table(asset, numbers, entries) -> dict | None:
                 e["horizon"],
                 cell(target, strong=True),
                 AnalystTarget.Basis(e["basis"]).label,
-                fmt.short_date(e["published_on"], numbers.language),
+                fmt.long_date(e["published_on"], numbers.language),
             ]
         )
     columns = [_("Institution"), _("Horizon"), _("Target"), _("Basis"), _("Published")]
     return table(_("Published %(name)s price targets") % {"name": asset.name}, columns, rows)
+
+
+def analyst_sources(entries) -> list[dict]:
+    """One link per source, even when a source backs several targets."""
+    seen, out = set(), []
+    for e in entries:
+        if e["source_url"] not in seen:
+            seen.add(e["source_url"])
+            out.append(e)
+    return out
 
 
 def faq_schema(page) -> str:
@@ -786,6 +796,7 @@ def asset_page(asset, language="en") -> dict:
         "long_term_table": long_term_table(numbers, points, name),
         "technical_panels": technical_panels(asset, numbers, snapshot),
         "analysts_table": analyst_table(asset, numbers, page["analysts"]),
+        "analyst_sources": analyst_sources(page["analysts"]),
         "history_table": history_table(numbers, bars, name),
         "accuracy_table": accuracy_table(asset, numbers),
         "matured_table": matured_table(asset, numbers),

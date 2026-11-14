@@ -147,6 +147,20 @@ def test_analysts_show_only_with_entries(client, btc):
     html = client.get("/bitcoin-price-prediction/").content.decode()
     assert 'id="analysts"' in html and "Example Bank" in html and "https://example.com/o" in html
     assert "End of period" in html and "Horizon&lt;" not in html
+    assert "October 1, 2026" in html  # published date with its year
+    btc.analyst_targets.create(
+        institution="Example Bank",
+        kind="bank",
+        target=150000,
+        basis="end",
+        horizon="2030",
+        published_on="2026-10-01",
+        source_title="Outlook",
+        source_url="https://example.com/o",
+    )
+    caching.bump()
+    html = client.get("/bitcoin-price-prediction/").content.decode()
+    assert html.count('href="https://example.com/o"') == 1  # one source link for two targets
 
 
 def test_home_and_hubs(client, btc):

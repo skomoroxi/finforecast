@@ -181,7 +181,7 @@
   <div class="container">
     <h2>{{ page.h_analysts }}</h2>
     {% include "web/_table.html" with t=analysts_table %}
-    <ul class="sources">{% for e in page.analysts %}<li><a href="{{ e.source_url }}" rel="nofollow noopener">{{ e.institution }}: {{ e.source_title }}</a></li>{% endfor %}</ul>
+    <ul class="sources">{% for e in analyst_sources %}<li><a href="{{ e.source_url }}" rel="nofollow noopener">{{ e.institution }}: {{ e.source_title }}</a></li>{% endfor %}</ul>
   </div>
 </section>
 {% endif %}
