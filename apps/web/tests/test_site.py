@@ -311,5 +311,5 @@ def test_google_tag_manager_is_in_the_head(client, btc):
     for url in ("/", "/bitcoin-price-prediction/", "/accuracy/", "/no-such-page/"):
         html = client.get(url).content.decode()
         head = html.split("</head>", 1)[0]
-        assert "event:'gtm.js'" in head and "'GTM-P2ZGFMR3'" in head, url
-        assert "googletagmanager.com/ns.html?id=GTM-P2ZGFMR3" in html.split("<body>", 1)[1][:400], url
+        assert "event:'gtm.js'" in head and "'GTM-NZWSBVLP'" in head, url
+        assert "googletagmanager.com/ns.html?id=GTM-NZWSBVLP" in html.split("<body>", 1)[1][:400], url
