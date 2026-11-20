@@ -194,6 +194,44 @@ class Comparison(models.Model):
             raise ValidationError(errors)
 
 
+class ListingPage(models.Model):
+    """The page of a newly listed asset before it has enough history for forecasts (apps.forecasts MIN_BARS):
+    price chart and facts, no forecast numbers. Once the first forecast run exists the normal page replaces it."""
+
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="listing_pages")
+    language = models.ForeignKey(Language, on_delete=models.CASCADE, related_name="listing_pages")
+    enabled = models.BooleanField(default=True)
+    title = models.CharField(max_length=200, blank=True, help_text="Title tag. Empty = default pattern.")
+    meta_description = models.CharField(max_length=300, blank=True, help_text="Empty = default pattern.")
+    h1 = models.CharField(max_length=200, blank=True, help_text="Empty = default pattern.")
+    intro = models.TextField(blank=True, help_text="Paragraphs in the hero.")
+    body = models.TextField(
+        blank=True, help_text="Paragraphs after the chart; a paragraph starting with '## ' is a heading."
+    )
+    faq = models.TextField(blank=True, help_text="Question :: answer, one pair per paragraph.")
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["asset", "language"], name="listing_page_unique")]
+
+    def __str__(self):
+        return f"{self.asset.code} listing page ({self.language_id})"
+
+    TEXT_FIELDS = ("title", "meta_description", "h1", "intro", "body", "faq")
+
+    def clean(self):
+        from apps.content.templating import names
+        from apps.web.data import LISTING_VARIABLES
+
+        errors = {}
+        for field in self.TEXT_FIELDS:
+            variables, flags = names(getattr(self, field) or "")
+            unknown = sorted(variables - LISTING_VARIABLES)
+            if unknown or flags:
+                errors[field] = "Unknown variables or flags: " + ", ".join(unknown + sorted(flags))
+        if errors:
+            raise ValidationError(errors)
+
+
 class Page(models.Model):
     """Static pages, guides and blog posts, one row per language."""
 

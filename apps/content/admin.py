@@ -13,6 +13,7 @@ from .models import (
     CustomBlock,
     Draft,
     Language,
+    ListingPage,
     Override,
     Page,
     Reviewer,
@@ -236,6 +237,24 @@ class ComparisonAdmin(ModelAdmin):
                 "{left_30d}, {left_change_30d}, {left_2030}, {left_change_2030}, {left_vol}, {left_error} "
                 "(and the same with right_), {date}, {last_year}. Empty title or meta use the default pattern.",
                 "fields": ["title", "meta_description", "intro", "block_title", "block_body", "faq"],
+            },
+        ),
+    ]
+
+
+@admin.register(ListingPage)
+class ListingPageAdmin(ModelAdmin):
+    list_display = ["asset", "language", "enabled"]
+    list_filter = ["language", "enabled"]
+    fieldsets = [
+        (None, {"fields": ["asset", "language", "enabled"]}),
+        (
+            "Page content",
+            {
+                "description": "Shown only while the asset has no forecasts yet. Variables: {name}, {code}, {price}, "
+                "{date}, {first_date}, {first_close}, {change_since_first}, {high}, {low}, {days}, {days_needed}. "
+                "Empty title, meta or H1 use the default pattern.",
+                "fields": ["title", "meta_description", "h1", "intro", "body", "faq"],
             },
         ),
     ]

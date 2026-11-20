@@ -949,6 +949,112 @@ def compare_content(pair, compared: dict) -> dict:
     }
 
 
+# Variables a listing page's texts can use (apps.content.models.ListingPage).
+LISTING_VARIABLES = {
+    "name",
+    "code",
+    "price",
+    "date",
+    "first_date",
+    "first_close",
+    "change_since_first",
+    "high",
+    "low",
+    "days",
+    "days_needed",
+}
+LISTING_DEFAULTS = {
+    "title": "{name} ({code}) Stock Price, Chart and Forecast | FinForecast",
+    "meta_description": "{name} ({code}) stock price: {price} at the close on {date}, chart since the first trading "
+    "day on {first_date}. Forecasts start once there are {days_needed} trading days of history.",
+    "h1": "{name} ({code}) stock price and forecast",
+}
+
+
+def listing_page(asset, listing, language="en") -> dict | None:
+    """A newly listed asset: price chart and facts, no forecast numbers. None when there are no prices yet."""
+    from apps.forecasts.services import MIN_BARS
+
+    bars = list(PriceBar.objects.filter(asset=asset).order_by("date").values_list("date", "high", "low", "close"))
+    if not bars:
+        return None
+    numbers = Numbers(asset, language)
+    first_date, _h, _l, first_close = bars[0]
+    last_date, _h, _l, last_close = bars[-1]
+    highs = [h for _d, h, _l, _c in bars if h is not None]
+    lows = [low for _d, _h, low, _c in bars if low is not None]
+    change = float(last_close) / float(first_close) - 1 if first_close else None
+    previous = float(bars[-2][3]) if len(bars) > 1 else None
+    day_change = float(last_close) / previous - 1 if previous else None
+    values = {
+        "name": asset.name,
+        "code": asset.code,
+        "price": numbers.money(last_close),
+        "date": fmt.long_date(last_date, language),
+        "first_date": fmt.long_date(first_date, language),
+        "first_close": numbers.money(first_close),
+        "change_since_first": numbers.percent(change),
+        "high": numbers.money(max(highs)) if highs else None,
+        "low": numbers.money(min(lows)) if lows else None,
+        "days": str(len(bars)),
+        "days_needed": str(MIN_BARS),
+    }
+    values = {k: v for k, v in values.items() if v and v != "—"}
+
+    def paragraphs(text, field):
+        return render(text or "", values, {}, f"{asset.code}|listing|{field}")
+
+    def line(text, field):
+        out = paragraphs(text, field)
+        return out[0] if out else ""
+
+    sections, current = [], None
+    for p in paragraphs(listing.body, "body"):
+        if p.startswith("## "):
+            current = {"title": p[3:].strip(), "paragraphs": []}
+            sections.append(current)
+        else:
+            if current is None:
+                current = {"title": "", "paragraphs": []}
+                sections.append(current)
+            current["paragraphs"].append(p)
+    faq = [
+        dict(zip(("title", "text"), p.split(" :: ", 1), strict=True))
+        for p in paragraphs(listing.faq, "faq")
+        if " :: " in p
+    ]
+    return {
+        "page_title": line(listing.title, "title") or line(LISTING_DEFAULTS["title"], "title"),
+        "page_description": line(listing.meta_description, "meta")
+        or line(LISTING_DEFAULTS["meta_description"], "meta"),
+        "h1": line(listing.h1, "h1") or line(LISTING_DEFAULTS["h1"], "h1"),
+        "intro": paragraphs(listing.intro, "intro"),
+        "sections": sections,
+        "faq": faq,
+        "faq_schema": faq_json(faq),
+        "hero_image": HERO_IMAGES.get(asset.asset_class.code, "stock-chart.svg"),
+        "chart_color": asset.color or "#8a96a8",
+        "updated": values["date"],
+        "facts": {
+            "price": values["price"],
+            "unit": numbers.unit_short(),
+            "dir": direction(day_change),
+            "arrow": arrow(day_change),
+            "day_change": numbers.percent(day_change),
+            "date": values["date"],
+            "first_date": values["first_date"],
+            "first_close": values.get("first_close", "—"),
+            "change_since_first": numbers.signed(change),
+            "change_dir": direction(change),
+            "high": values.get("high", "—"),
+            "low": values.get("low", "—"),
+            "days": len(bars),
+            "days_needed": MIN_BARS,
+            "days_left": max(MIN_BARS - len(bars), 0),
+        },
+    }
+
+
 def accuracy_overview(language="en") -> dict:
     rows = ForecastAccuracy.objects.filter(method="consensus", horizon="30d", basis="backtest").select_related("asset")
     ranked = sorted(rows, key=lambda r: r.mape)

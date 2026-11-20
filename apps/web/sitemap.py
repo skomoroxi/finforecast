@@ -7,8 +7,8 @@ from django.conf import settings
 from django.db.models import Max
 from django.urls import reverse
 
-from apps.content.models import Comparison, Page, Reviewer
-from apps.market.models import Asset
+from apps.content.models import Comparison, ListingPage, Page, Reviewer
+from apps.market.models import Asset, PriceBar
 
 from . import data
 
@@ -31,6 +31,15 @@ def entries() -> list[tuple[str, date | None]]:
         if country in countries:
             out.append((reverse("hub_country", args=[slug]), newest))
     out += [(data.asset_url(a), runs[a.pk]) for a in assets.order_by("asset_class__code", "name")]
+    listings = (
+        ListingPage.objects.filter(enabled=True, language__code="en", asset__enabled=True, asset__series_of=None)
+        .exclude(asset_id__in=runs)
+        .select_related("asset")
+    )
+    for listing in listings.order_by("asset__name"):
+        last = PriceBar.objects.filter(asset=listing.asset).aggregate(last=Max("date"))["last"]
+        if last:
+            out.append((data.asset_url(listing.asset), last))
     out.append((reverse("accuracy"), newest))
 
     pairs = Comparison.objects.filter(enabled=True, left__enabled=True, right__enabled=True)

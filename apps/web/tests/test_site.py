@@ -358,3 +358,63 @@ def test_google_tag_manager_is_in_the_head(client, btc):
         assert '<script async src="https://www.googletagmanager.com/gtm.js?id=GTM-NZWSBVLP"></script>' in head, url
         assert "gtag('js', new Date());" in head, url
         assert "GTM-P2ZGFMR3" not in html, url
+
+
+def add_bars(asset_, closes):
+    from datetime import timedelta
+    from decimal import Decimal
+
+    from django.utils import timezone
+
+    from apps.market.models import PriceBar
+
+    start = timezone.now().date() - timedelta(days=len(closes))
+    for i, close in enumerate(closes):
+        value = Decimal(str(close))
+        PriceBar.objects.create(
+            asset=asset_,
+            date=start + timedelta(days=i),
+            high=value + 5,
+            low=value - 5,
+            close=value,
+            avg=value,
+            source="twelvedata",
+        )
+
+
+def test_new_listing_without_page_is_404(client, seeded):
+    ant = asset("ANT")
+    add_bars(ant, [97.17, 86.48])
+    assert client.get(data.asset_url(ant)).status_code == 404
+
+
+def test_listing_page_shows_chart_and_facts_without_forecasts(client, seeded):
+    from apps.content.models import ListingPage
+
+    ant = asset("ANT")
+    add_bars(ant, [97.17, 86.48])
+    ListingPage.objects.create(
+        asset=ant,
+        language=Language.objects.get(code="en"),
+        intro="{name} first traded on {first_date} and closed at {price} on {date}.",
+        body="## The IPO\n\nPriced at $83.\n\n## The company\n\n{days} of {days_needed} days.",
+        faq="When did {code} start trading? :: On {first_date}.",
+    )
+    caching.bump()
+    html = client.get(data.asset_url(ant)).content.decode()
+    assert "<title>Anthropic (ANT) Stock Price, Chart and Forecast | FinForecast</title>" in html
+    assert "<h1>Anthropic (ANT) stock price and forecast</h1>" in html
+    assert "closed at $86.48" in html and "<h2>The IPO</h2>" in html and "2 of 60 days." in html
+    assert 'class="pc" data-code="ANT"' in html and '<option value="none" selected>' in html
+    assert '"@type":"FAQPage"' in html and "Consensus" not in html
+    assert data.asset_url(ant) in client.get("/forecast-sitemap.xml").content.decode()
+
+
+def test_listing_clean_rejects_unknown_variables(seeded):
+    from django.core.exceptions import ValidationError
+
+    from apps.content.models import ListingPage
+
+    page = ListingPage(asset=asset("ANT"), language=Language.objects.get(code="en"), intro="{price} and {forecast_30d}")
+    with pytest.raises(ValidationError):
+        page.clean()

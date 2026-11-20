@@ -71,6 +71,7 @@ STOCKS_US = [
     ("CCL", "Carnival"),
     ("CGC", "Canopy Growth"),
     ("CRCL", "Circle"),
+    ("ANT", "Anthropic"),
     ("MSTR", "Strategy (MicroStrategy)"),
     ("DB", "Deutsche Bank"),
     ("NVO", "Novo Nordisk"),

@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, render
 from django.utils.translation import gettext as _
 
 from apps.content.context import NoForecast
-from apps.content.models import Comparison, Page, Reviewer
+from apps.content.models import Comparison, ListingPage, Page, Reviewer
 from apps.market.models import Asset
 
 from . import archive, data, sitemap
@@ -74,9 +74,22 @@ def asset_page(request, slug):
     try:
         context = data.asset_page(asset)
     except NoForecast:
-        raise Http404 from None
+        return listing_page(request, asset)
     page = context["page"]
     return render(request, "web/asset.html", seo(page["title"], page["meta_description"]) | context)
+
+
+def listing_page(request, asset):
+    """A newly listed asset without forecasts yet: chart and facts, if an editor has written its page."""
+    listing = ListingPage.objects.filter(asset=asset, language__code="en", enabled=True).first()
+    content = data.listing_page(asset, listing) if listing else None
+    if content is None:
+        raise Http404
+    return render(
+        request,
+        "web/listing.html",
+        seo(content["page_title"], content["page_description"]) | {"asset": asset, "content": content},
+    )
 
 
 @cached_page
