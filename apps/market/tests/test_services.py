@@ -63,8 +63,8 @@ def test_catalog_matches_the_approved_list():
     by_class = {}
     for row in pages:
         by_class[row["asset_class"]] = by_class.get(row["asset_class"], 0) + 1
-    assert by_class == {"crypto": 33, "stock": 40, "etf_index": 3, "fx": 6, "metal": 2, "energy": 2}
-    assert len(pages) == 86
+    assert by_class == {"crypto": 33, "stock": 41, "etf_index": 3, "fx": 6, "metal": 2, "energy": 2}
+    assert len(pages) == 87
 
 
 @pytest.fixture
