@@ -219,7 +219,7 @@ def test_comparison_content(client, seeded):
     pair = Comparison.objects.get(left__code="BTC", right__code="ETH")
     pair.title = "{left} or {right}? {left_code} vs {right_code}"
     pair.intro = "{left} closed at {left_price}; {right} at {right_price}."
-    pair.faq = "Which is riskier? :: {left} moves {left_vol} a year.\n\nMissing value? :: {left_nope}"
+    pair.faq = "Which is riskier? :: {left} closed at {left_price}.\n\nMissing value? :: {left_nope}"
     pair.block_title = "What drives {left}"
     pair.block_body = "Paragraph one."
     pair.save()
