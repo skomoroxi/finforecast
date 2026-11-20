@@ -163,11 +163,35 @@ class Comparison(models.Model):
     right = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="+")
     enabled = models.BooleanField(default=True)
 
+    # Optional page content, in the template syntax with pair variables ({left}, {left_price}, {right_2030} …).
+    # Empty fields fall back to the class-wide patterns in apps.web.data.COMPARE_DEFAULTS.
+    title = models.CharField(max_length=200, blank=True, help_text="Title tag. Empty = default pattern.")
+    meta_description = models.CharField(max_length=300, blank=True, help_text="Empty = default pattern.")
+    intro = models.TextField(blank=True, help_text="Paragraphs shown above the table.")
+    faq = models.TextField(blank=True, help_text="Question :: answer, one pair per paragraph.")
+    block_title = models.CharField(max_length=200, blank=True)
+    block_body = models.TextField(blank=True, help_text="Paragraphs shown after the table, under block_title.")
+
     class Meta:
         ordering = ["slug"]
 
     def __str__(self):
         return f"{self.left} vs {self.right}"
+
+    TEXT_FIELDS = ("title", "meta_description", "intro", "faq", "block_title", "block_body")
+
+    def clean(self):
+        from apps.content.templating import names
+        from apps.web.data import COMPARE_VARIABLES
+
+        errors = {}
+        for field in self.TEXT_FIELDS:
+            variables, flags = names(getattr(self, field) or "")
+            unknown = sorted(variables - COMPARE_VARIABLES)
+            if unknown or flags:
+                errors[field] = "Unknown variables or flags: " + ", ".join(unknown + sorted(flags))
+        if errors:
+            raise ValidationError(errors)
 
 
 class Page(models.Model):

@@ -88,10 +88,15 @@ def accuracy(request):
 @cached_page
 def comparison(request, slug):
     pair = get_object_or_404(Comparison.objects.select_related("left", "right"), slug=slug, enabled=True)
-    title = _("%(left)s vs %(right)s Forecast | FinForecast") % {"left": pair.left.name, "right": pair.right.name}
     left = Asset.objects.select_related("asset_class").get(pk=pair.left_id)
     right = Asset.objects.select_related("asset_class").get(pk=pair.right_id)
-    return render(request, "web/compare.html", seo(title) | {"pair": pair} | data.compare(left, right))
+    compared = data.compare(left, right)
+    content = data.compare_content(pair, compared)
+    return render(
+        request,
+        "web/compare.html",
+        seo(content["page_title"], content["page_description"]) | {"pair": pair, "content": content} | compared,
+    )
 
 
 @cached_page

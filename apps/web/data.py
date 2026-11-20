@@ -14,6 +14,7 @@ from django.utils.translation import gettext as _
 from apps.content import formatting as fmt
 from apps.content.models import AnalystTarget
 from apps.content.page import build_page
+from apps.content.templating import render
 from apps.forecasts.display import for_display, recent_matured
 from apps.forecasts.models import ForecastAccuracy, ForecastPoint, ForecastRun
 from apps.market.models import Asset, PriceBar
@@ -652,12 +653,19 @@ def faq_schema(page) -> str:
     """schema.org FAQPage as JSON-LD, built from the FAQ shown on the page (empty if the section is hidden)."""
     if not page["show"].get("faq") or not page["faq"]:
         return ""
+    return faq_json(page["faq"])
+
+
+def faq_json(items) -> str:
+    """FAQPage JSON-LD for a list of {"title", "text"} items."""
+    if not items:
+        return ""
     data = {
         "@context": "https://schema.org",
         "@type": "FAQPage",
         "mainEntity": [
             {"@type": "Question", "name": item["title"], "acceptedAnswer": {"@type": "Answer", "text": item["text"]}}
-            for item in page["faq"]
+            for item in items
         ],
     }
     # Safe inside <script>: no "<", ">" or "&" can close the tag.
@@ -856,6 +864,8 @@ def compare(left, right, language="en") -> dict:
         sides.append(
             {
                 "name": asset.name,
+                "code": asset.code,
+                "date": fmt.long_date(run.data_date, language) if run else "",
                 "url": asset_url(asset),
                 "cells": [
                     numbers.money(today),
@@ -881,10 +891,61 @@ def compare(left, right, language="en") -> dict:
     ]
     for i, label in enumerate(labels):
         rows.append([label, sides[0]["cells"][i], sides[1]["cells"][i]])
+    values = {"last_year": "2030", "date": sides[0]["date"]}
+    for prefix, side in (("left", sides[0]), ("right", sides[1])):
+        values[prefix] = side["name"]
+        values[f"{prefix}_code"] = side["code"]
+        for key, cell_value in zip(COMPARE_CELLS, side["cells"], strict=True):
+            if cell_value and cell_value != "—":
+                values[f"{prefix}_{key}"] = cell_value
     return {
         "left": sides[0],
         "right": sides[1],
         "table": table(_("Forecast comparison"), [_("Measure"), left.name, right.name], rows),
+        "values": values,
+        "both_stocks": left.asset_class.code == "stock" and right.asset_class.code == "stock",
+    }
+
+
+# Variables a comparison page's texts can use: {left}, {left_code}, {left_price}, {left_30d}, {left_change_30d},
+# {left_2030}, {left_change_2030}, {left_vol}, {left_error}, the same for right_, plus {date} and {last_year}.
+COMPARE_CELLS = ("price", "30d", "change_30d", "2030", "change_2030", "vol", "error")
+COMPARE_VARIABLES = {"date", "last_year"} | {
+    f"{side}{suffix}" for side in ("left", "right") for suffix in ["", "_code"] + [f"_{c}" for c in COMPARE_CELLS]
+}
+COMPARE_DEFAULTS = {
+    "title": "{left} vs {right} Forecast | FinForecast",
+    "title_stocks": "{left} vs {right} Stock Forecast: {left_code} or {right_code} to {last_year}?",
+    "meta_description": "{left} vs {right}: latest price, 30-day and {last_year} forecasts, yearly volatility and "
+    "typical forecast error for {left_code} and {right_code}, updated daily from the same models.",
+}
+
+
+def compare_content(pair, compared: dict) -> dict:
+    """The comparison page's texts with today's values; empty fields use the class-wide patterns."""
+    values = compared["values"]
+
+    def paragraphs(text, field):
+        return render(text or "", values, {}, f"{pair.slug}|{field}")
+
+    def line(text, field):
+        out = paragraphs(text, field)
+        return out[0] if out else ""
+
+    title_default = COMPARE_DEFAULTS["title_stocks" if compared["both_stocks"] else "title"]
+    faq = [
+        dict(zip(("title", "text"), p.split(" :: ", 1), strict=True))
+        for p in paragraphs(pair.faq, "faq")
+        if " :: " in p
+    ]
+    return {
+        "page_title": line(pair.title, "title") or line(title_default, "title"),
+        "page_description": line(pair.meta_description, "meta") or line(COMPARE_DEFAULTS["meta_description"], "meta"),
+        "intro": paragraphs(pair.intro, "intro"),
+        "faq": faq,
+        "faq_schema": faq_json(faq),
+        "block_title": line(pair.block_title, "block_title"),
+        "block": paragraphs(pair.block_body, "block"),
     }
 
 

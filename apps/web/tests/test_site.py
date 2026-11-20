@@ -207,7 +207,37 @@ def test_comparison(client, seeded):
     pair = Comparison.objects.get(left__code="BTC", right__code="ETH")
     html = client.get(reverse("comparison", args=[pair.slug])).content.decode()
     assert "Bitcoin" in html and "Ethereum" in html and "$2,400" in html
+    assert '<meta name="description" content="Bitcoin vs Ethereum: latest price' in html
+    assert "<title>Bitcoin vs Ethereum Forecast | FinForecast</title>" in html
+    assert "application/ld+json" not in html  # no FAQ yet
     assert pair.slug in client.get(reverse("comparisons")).content.decode()
+
+
+def test_comparison_content(client, seeded):
+    add_forecast(asset("BTC"), 80000.0)
+    add_forecast(asset("ETH"), 2400.0)
+    pair = Comparison.objects.get(left__code="BTC", right__code="ETH")
+    pair.title = "{left} or {right}? {left_code} vs {right_code}"
+    pair.intro = "{left} closed at {left_price}; {right} at {right_price}."
+    pair.faq = "Which is riskier? :: {left} moves {left_vol} a year.\n\nMissing value? :: {left_nope}"
+    pair.block_title = "What drives {left}"
+    pair.block_body = "Paragraph one."
+    pair.save()
+    caching.bump()
+    html = client.get(reverse("comparison", args=[pair.slug])).content.decode()
+    assert "<title>Bitcoin or Ethereum? BTC vs ETH</title>" in html
+    assert "Bitcoin closed at $80,000" in html and "What drives Bitcoin" in html
+    assert '<h3 class="faq__q">Which is riskier?</h3>' in html and "Missing value?" not in html
+    assert '"@type":"FAQPage"' in html
+
+
+def test_comparison_clean_rejects_unknown_variables(seeded):
+    from django.core.exceptions import ValidationError
+
+    pair = Comparison.objects.get(left__code="BTC", right__code="ETH")
+    pair.intro = "{left_price} and {price}"
+    with pytest.raises(ValidationError):
+        pair.clean()
 
 
 def test_static_pages_and_author(client, seeded):

@@ -227,6 +227,18 @@ class PageAdmin(ModelAdmin):
 @admin.register(Comparison)
 class ComparisonAdmin(ModelAdmin):
     list_display = ["slug", "left", "right", "enabled"]
+    fieldsets = [
+        (None, {"fields": ["slug", "left", "right", "enabled"]}),
+        (
+            "Page content",
+            {
+                "description": "Template syntax with pair variables: {left}, {right}, {left_code}, {left_price}, "
+                "{left_30d}, {left_change_30d}, {left_2030}, {left_change_2030}, {left_vol}, {left_error} "
+                "(and the same with right_), {date}, {last_year}. Empty title or meta use the default pattern.",
+                "fields": ["title", "meta_description", "intro", "block_title", "block_body", "faq"],
+            },
+        ),
+    ]
 
 
 @admin.register(Revision)
