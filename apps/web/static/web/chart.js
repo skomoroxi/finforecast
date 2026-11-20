@@ -4,6 +4,7 @@
   "use strict";
 
   const COLORS = { arima: "#1431cd", reversion: "#b0662f", montecarlo: "#7a3fb0", consensus: "#181d27" };
+  const SHORT_HISTORY = 30;
   const RANGES = { "1M": 31, "6M": 183, "1Y": 366, "5Y": 1827, "10Y": 3653 };
   const library = document.currentScript.dataset.lib;
 
@@ -61,6 +62,8 @@
         bottomColor: `${color}00`,
         priceLineColor: color,
         priceFormat: format,
+        // A new listing has only a few closes: show them as points, or a single close would be invisible.
+        pointMarkersVisible: data.history.length < SHORT_HISTORY,
       })
       .setData(toPoints(data.history));
 
@@ -104,6 +107,10 @@
       }
       low.applyOptions({ visible: shown !== "none" });
       high.applyOptions({ visible: shown !== "none" });
+      if (data.history.length < SHORT_HISTORY && shown === "none") {
+        chart.timeScale().fitContent();
+        return;
+      }
       const days = RANGES[range.value];
       const end = new Date(lastHistory);
       const from = days ? new Date(end.getTime() - days * 864e5) : new Date(data.history[0][0]);
