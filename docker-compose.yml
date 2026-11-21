@@ -24,6 +24,7 @@ services:
     command: ["postgres", "-c", "shared_buffers=256MB", "-c", "work_mem=4MB", "-c", "max_connections=30",
               "-c", "maintenance_work_mem=128MB", "-c", "timescaledb.telemetry_level=off"]
     volumes: [pgdata:/var/lib/postgresql/data]
+    ports: ["127.0.0.1:5432:5432"]  # local only, for Adminer (deploy/admin-tools.sh)
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
