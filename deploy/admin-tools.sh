@@ -2,12 +2,14 @@
 # Admin tools on the Hostman VPS: Cockpit (files, services, logs, terminal) and Adminer (MariaDB + PostgreSQL).
 # Both listen on 127.0.0.1 only; reach them through an SSH tunnel:
 #   ssh -N -L 9090:127.0.0.1:9090 -L 8082:127.0.0.1:8082 root@212.192.2.86
-# then open http://localhost:9090 (Cockpit) and http://localhost:8082 (Adminer). Idempotent.
+# then open https://localhost:9090 (Cockpit, self-signed certificate: accept the browser warning once) and
+# http://localhost:8082 (Adminer). Idempotent.
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 apt-get install -y -qq --no-install-recommends cockpit-ws cockpit-system cockpit-bridge cockpit-files adminer php-pgsql >/dev/null
 
-# Cockpit: local only, plain HTTP is fine inside the SSH tunnel.
+# Cockpit: local only, over its own HTTPS (self-signed). Plain HTTP (AllowUnencrypted) signs in but the session's
+# websocket never attaches, so it times out after 15 s (seen with Cockpit 360 on Ubuntu 26.04).
 install -d /etc/systemd/system/cockpit.socket.d
 cat > /etc/systemd/system/cockpit.socket.d/listen.conf <<'CONF'
 [Socket]
@@ -16,8 +18,7 @@ ListenStream=127.0.0.1:9090
 CONF
 cat > /etc/cockpit/cockpit.conf <<'CONF'
 [WebService]
-AllowUnencrypted = true
-Origins = http://localhost:9090 http://127.0.0.1:9090
+Origins = https://localhost:9090 https://127.0.0.1:9090
 
 [Session]
 IdleTimeout = 30
